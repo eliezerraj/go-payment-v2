@@ -22,8 +22,3 @@ type PaymentResponse struct {
 	Response    string	`json:"response"`
 	Payment		any	`json:"payment,omitempty"`
 }
-
-type OrderResponse struct {
-	Response    string	`json:"response"`
-	Order		any	`json:"order,omitempty"`
-}

@@ -1,0 +1,530 @@
+openapi: 3.0.3
+info:
+  title: Credential Provider
+  description: API for managing sessions of the credential provider. (Date 2026-08-18)
+  version: 0.0.2
+servers:
+  - url: 'https://credentialprovider/v1'
+paths:
+
+  /info:
+    get:
+      tags:
+        - Credential
+      summary: Get some basic information about the credential provider service
+      description: 'Retrieves some basic information about the credential provider service.'
+      parameters:
+        - in: header
+          name: X-Request-ID
+          required: false
+          schema:
+            type: string
+          description: (Optional) request ID for tracking the request. Strongly recommended to provide it. Always use the X-Request-ID already propagated in request headers. If not provided, a random UUID will be generated and used for tracking. 
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: credential provider
+                  provider:
+                    type: string
+                    example: aws:9999999
+                  service:
+                    type: string
+                    example: eks
+                  started_at:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+                  version:
+                    type: string
+                    example: '0.0.2'
+
+  /credential/query:
+    post:
+      tags:
+        - Credential
+      summary: Get a credential from given credential id
+      description: 'Retrieves just the credential based on the given credential id. The method is a POST in order to avoid the log exposure of the credential id in URL. The POST ensure bypassing HTTP caching mechanism.'
+      parameters:
+        - in: header
+          name: X-Dock-Svc-Token
+          required: true
+          schema:
+            type: string
+          description: (Mandatory) Docknito DSA Token for authentication.
+        - in: header
+          name: X-Request-ID
+          required: false
+          schema:
+            type: string
+          description: (Optional) request ID for tracking the request. Strongly recommended to provide it. Always use the X-Request-ID already propagated in request headers. If not provided, a random UUID will be generated and used for tracking. 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credential'
+            examples:
+              Example 1:
+                value:
+                  credential_id: 'db-arch-02'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: 'db-arch-02'
+                  synchronized_at:
+                    type: string
+                    format: date-time
+                    example: '2026-08-14T14:57:14.852Z'
+                  value:
+                    type: object
+                    properties:
+                      provider:
+                        type: string
+                        example: 'aws'
+                      account_id:
+                        type: string
+                        example: '1234567890'
+                      host:
+                        type: string
+                        example: 'db-arch-02.aaaaaaa.us-east-2.rds.amazonaws.com'
+                      port:
+                        type: integer
+                        example: 5434
+                      username:
+                        type: string
+                        example: 'user-admin'
+                      password:
+                        type: string
+                        example: 'mysecretpassword'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '400'
+                  message:
+                    type: string
+                    example: 'Bad request, check your input parameters'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '401'
+                  message:
+                    type: string
+                    example: 'Access denied, check your credentials: Access Denied'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '403'
+                  message:
+                    type: string
+                    example: 'Access denied, check your credentials: Access Denied'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '404'
+                  message:
+                    type: string
+                    example: 'The requested resource was not found'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '429'
+                  message:
+                    type: string
+                    example: 'Too many requests, please try again later.'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '500'
+                  message:
+                    type: string
+                    example: 'An internal error occurred while processing the request.'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+
+  /credential/issuer/query:
+    post:
+      tags:
+        - Credential
+      summary: Get all credential from given list of issuer id
+      description: 'Retrieves all credentials based on the given list of issuer ids. The method is a POST in order to avoid the log exposure of the issuer ids in URL. The POST ensure bypassing HTTP caching mechanism.'
+      parameters:
+        - in: header
+          name: X-Dock-Svc-Token
+          required: true
+          schema:
+            type: string
+          description: (Mandatory) Docknito DSA Token for authentication.
+        - in: header
+          name: X-Request-ID
+          required: false
+          schema:
+            type: string
+          description: (Optional) request ID for tracking the request. Strongly recommended to provide it. Always use the X-Request-ID already propagated in request headers. If not provided, a random UUID will be generated and used for tracking. 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                issuer_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: List of issuer IDs to retrieve credentials for.
+            examples:
+              Example 1:
+                value:
+                  issuer_ids: ['100', '101','102']
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer_ids:
+                    type: array
+                    items:
+                      type: string
+                    example: ['100', '101','102']
+                  synchronized_at:
+                    type: string
+                    format: date-time
+                    example: '2026-08-14T14:57:14.852Z'
+                  value:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        issuer_id:
+                          type: string
+                          example: '100'
+                        provider:
+                          type: string
+                          example: 'aws'
+                        account_id:
+                          type: string
+                          example: '1234567890'
+                        host:
+                          type: string
+                          example: 'db-arch-02.aaaaaaa.us-east-2.rds.amazonaws.com'
+                        port:
+                          type: integer
+                          example: 5434
+                        username:
+                          type: string
+                          example: 'user-admin'
+                        password:
+                          type: string
+                          example: 'mysecretpassword'
+                    example:
+                      - issuer_id: '100'
+                        provider: 'aws'
+                        account_id: '1234567890'
+                        host: 'db-arch-02.aaaaaaa.us-east-2.rds.amazonaws.com'
+                        port: 5434
+                        username: 'user-admin'
+                        password: 'mysecretpassword'
+                      - issuer_id: '101'
+                        provider: 'azure'
+                        account_id: 'az1d-aks-architecture'
+                        host: 'db-az1-arch-02.postgres.database.azure.com'
+                        port: 1433
+                        username: 'user-admin-2'
+                        password: 'mysecretpassword2'
+                      - issuer_id: '102'
+                        provider: 'huawei'
+                        account_id: 'huawei-arch-03'
+                        host: 'db-huawei-arch-03.db.huawei.com'
+                        port: 5432
+                        username: 'user-admin-3'
+                        password: 'mysecretpassword3'
+        '206':
+          description: Partial Content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  issuer_ids:
+                    type: array
+                    items:
+                      type: string
+                    example: ['100', '101','102']
+                  synchronized_at:
+                    type: string
+                    format: date-time
+                    example: '2026-08-14T14:57:14.852Z'
+                  response:
+                    type: string
+                    example: 'Some credentials were not found for the given issuer id'
+                  value:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        provider:
+                          type: string
+                          example: 'aws'
+                        account_id:
+                          type: string
+                          example: '1234567890'
+                        host:
+                          type: string
+                          example: 'db-arch-02.aaaaaaa.us-east-2.rds.amazonaws.com'
+                        port:
+                          type: integer
+                          example: 5434
+                        username:
+                          type: string
+                          example: 'user-admin'
+                        password:
+                          type: string
+                          example: 'mysecretpassword'
+                    example:
+                      - issuer_id: '100'
+                        provider: 'aws'
+                        account_id: '1234567890'
+                        host: 'db-arch-02.aaaaaaa.us-east-2.rds.amazonaws.com'
+                        port: 5434
+                        username: 'user-admin'
+                        password: 'mysecretpassword'
+                      - issuer_id: '101'
+                        provider: 'azure'
+                        account_id: 'huawei-arch-03'
+                        host: 'db-huawei-arch-03.db.huawei.com'
+                        port: 5432
+                        username: 'user-admin-3'
+                        password: 'mysecretpassword3'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '400'
+                  message:
+                    type: string
+                    example: 'Bad request, check your input parameters'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '401'
+                  message:
+                    type: string
+                    example: 'Access denied, check your credentials: Access Denied'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '403'
+                  message:
+                    type: string
+                    example: 'Access denied, check your credentials: Access Denied'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '404'
+                  message:
+                    type: string
+                    example: 'The requested resource was not found'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '429'
+                  message:
+                    type: string
+                    example: 'Too many requests, please try again later.'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: '500'
+                  message:
+                    type: string
+                    example: 'An internal error occurred while processing the request.'
+                  path:
+                    type: string
+                    example: '/v1/credential'
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-08-18T17:32:56.503Z'
+
+components:
+  schemas:
+    Credential:
+      type: object
+      example:
+        credential_id: 'db-arch-02'
+      properties:
+        credential_id:
+          type: string
+          description: Credential ID of the credential to retrieve.
+          example: 'db-arch-02'  
+
+    GroupCredential:
+      type: object
+      example:
+        group_id: 'db-arch-02'
+      properties:
+        group_id:
+          type: string
+          description: Group ID of the group credential to retrieve.
+          example: 'pier'

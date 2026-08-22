@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"go.uber.org/zap"
 
 	"go.opentelemetry.io/otel"
@@ -51,6 +52,9 @@ func (p *PaymentController) PaymentAdd(ctx context.Context, req external.Payment
 			Password: req.CreditCard.Password,
 			CVV:      req.CreditCard.CVV,
 		}
+	} else {
+		logger.Error(ctx, "CreditCardRequest is nil in PaymentRequest")
+		return nil, errors.New("CreditCard is not provided informed")
 	}
 
 	// Call the use case to add the order

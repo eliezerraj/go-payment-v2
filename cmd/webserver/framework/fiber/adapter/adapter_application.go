@@ -46,6 +46,8 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber *fiber.Ctx) error {
 		ctxWithTimeout,
 		a.cfg.App.Name,
 		zap.ByteString("headers", utils.FormatHeadersAsJSON(ctxFiber.GetReqHeaders())),
+		zap.String("host", ctxFiber.Hostname()),
+		zap.String("path", ctxFiber.Path()),
 		zap.ByteString("query", ctxFiber.Request().URI().QueryString()),
 		zap.ByteString("body", ctxFiber.Body()),
 	)
@@ -91,6 +93,8 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
 		ctxWithTimeout,
 		a.cfg.App.Name,
 		zap.ByteString("headers", utils.FormatHeadersAsJSON(ctxFiber.GetReqHeaders())),
+		zap.String("host", ctxFiber.Hostname()),
+		zap.String("path", ctxFiber.Path()),
 		zap.ByteString("query", ctxFiber.Request().URI().QueryString()),
 		zap.ByteString("body", ctxFiber.Body()),
 	)

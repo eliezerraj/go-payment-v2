@@ -9,13 +9,14 @@ import (
 
 	"github.com/eliezerraj/go-core/v3/logger"
 
+	"github.com/go-payment-v2/application/tracing"
 	"github.com/go-payment-v2/application/domain/entity"
 	"github.com/go-payment-v2/application/infrastructure/repository"
 	//"github.com/go-payment-v2/application/infrastructure/module"
 
 	"github.com/jackc/pgx/v5"
 
-	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -61,16 +62,18 @@ func (o *PaymentUsecase) BeginTx(ctx context.Context, opts pgx.TxOptions) (pgx.T
 func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment) (res_payment *entity.Payment, err error) {
 	logger.Info(ctx, "payment usecase PaymentAdd called")
 
-	tracer := otel.Tracer("payment.repository")
-	ctx, span := tracer.Start(ctx, "PaymentUsecase.PaymentAdd")
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentUsecase.PaymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
+	// Start a new transaction
 	tx, err := o.paymentRepository.BeginTx(ctx, pgx.TxOptions{ IsoLevel: pgx.ReadCommitted, AccessMode: pgx.ReadWrite })
 	if err != nil {
 		logger.Error(ctx, "payment usecase PaymentAdd failed to begin transaction", zap.Error(err))
 		return nil, err
 	}
 
+	//Defer a function to handle commit or rollback based on the outcome of the operation
 	defer func() {
 		if err != nil {
 			if rollbackErr := tx.Rollback(ctx); rollbackErr != nil && rollbackErr != pgx.ErrTxClosed {
@@ -87,7 +90,6 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 	//-----------------------------------------------------------
 	// Payment SECTION
 	//-----------------------------------------------------------
-
 	// Business logic: Set default values for payment
 	createAt := time.Now().UTC()
 	payment.CreatedAt = createAt 
@@ -110,7 +112,6 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 	//-----------------------------------------------------------
 	// PaymentCard SECTION
 	//-----------------------------------------------------------
-
 	if payment.CreditCard == nil {
 		logger.Error(ctx, "payment usecase PaymentAdd: no credit card provided, skipping payment card addition")
 		return nil, errors.New("no credit card provided for payment")
@@ -131,11 +132,11 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 
 // PaymentGet retrieves a payment from the repository based on the provided payment details.
 func (o *PaymentUsecase) PaymentGet(ctx context.Context, payment entity.Payment) (*entity.Payment, error) {
-	tracer := otel.Tracer("payment.repository")
-	ctx, span := tracer.Start(ctx, "PaymentUsecase.PaymentGet")
-	defer span.End()
-
 	logger.Info(ctx, "payment usecase PaymentGet called")
+	
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentUsecase.PaymentGet", trace.SpanKindInternal)
+	defer span.End()
 
 	// Get the payment from the repository
 	res_payment, err := o.paymentRepository.PaymentGet(ctx, payment)

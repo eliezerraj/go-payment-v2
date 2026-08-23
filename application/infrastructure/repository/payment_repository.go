@@ -9,12 +9,13 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/go-payment-v2/application/domain/entity"
-
+	"github.com/go-payment-v2/application/tracing"
+	
 	"github.com/eliezerraj/go-core/v3/logger"
 	"github.com/eliezerraj/go-core/v3/database/connector"
 
 	"go.opentelemetry.io/otel"
-
+	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/attribute"
@@ -55,9 +56,8 @@ func (p *PaymentRepository) PaymentGet(ctx context.Context, payment entity.Payme
 	logger.Info(ctx, "payment repository PaymentGet called")
 
 	// Tracing and metrics
-	tracer := otel.Tracer("payment.repository")
-    ctx, span := tracer.Start(ctx, "PaymentRepository.PaymentGet")
-    defer span.End()
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentGet", trace.SpanKindInternal)
+	defer span.End()
 
     meter := otel.Meter("go-payment-v2.repository")
     counter, _ := meter.Int64Counter("db_payment_get_requests_total")
@@ -120,8 +120,7 @@ func (p *PaymentRepository) PaymentAdd(ctx context.Context, tx pgx.Tx, payment e
 	logger.Info(ctx, "payment repository PaymentAdd called")
 
 	// Tracing and metrics
-	tracer := otel.Tracer("payment.repository")
-	ctx, span := tracer.Start(ctx, "PaymentRepository.PaymentAdd")
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentAdd", trace.SpanKindInternal)
 	defer span.End()
 	
 	meter := otel.Meter("go-payment-v2.repository")
@@ -170,8 +169,7 @@ func (p *PaymentRepository) PaymentCardAdd(ctx context.Context, tx pgx.Tx, payme
 	logger.Info(ctx, "payment repository PaymentCardAdd called")
 
 	// Tracing and metrics
-	tracer := otel.Tracer("payment.repository")
-	ctx, span := tracer.Start(ctx, "PaymentRepository.PaymentCardAdd")
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentCardAdd", trace.SpanKindInternal)
 	defer span.End()
 	
 	meter := otel.Meter("go-payment-v2.repository")

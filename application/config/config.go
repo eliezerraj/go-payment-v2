@@ -73,7 +73,8 @@ type Config struct {
 	Log         Log
 	OtelEnv		OtelEnv
 	Authorization Authorization
-	Inventory   Inventory
+	KafkaProducer KafkaProducer
+	Inventory     Inventory
 }
 
 type OtelEnv struct {
@@ -81,6 +82,15 @@ type OtelEnv struct {
 	UseStdoutTracerExporter		bool	`env:"OTEL_STDOUT_TRACER" envDefault:"false"`
 	UseOtlpCollector			bool	`env:"OTEL_COLLECTOR" envDefault:"true"`
 	OtelMetricsPort				string	`env:"OTEL_METRICS_PORT" envDefault:"9000"`
+}
+
+type KafkaProducer struct {
+	BrokerList []string `env:"KAFKA_PRODUCER_BROKER" envSeparator:","`
+	Topic      string   `env:"KAFKA_PRODUCER_TOPIC"`
+	Protocol   string   `env:"KAFKA_PRODUCER_PROTOCOL"`
+	Mechanism  string   `env:"KAFKA_PRODUCER_MECHANISM"`
+	Username   string   `env:"KAFKA_PRODUCER_USERNAME"`
+	Password   string   `env:"KAFKA_PRODUCER_PASSWORD"`
 }
 
 type Inventory struct {

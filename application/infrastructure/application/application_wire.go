@@ -100,9 +100,10 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 
 	// UseCase initialization
 	paymentUsecase := usecase.NewPaymentUseCase(paymentRepository)
+	paymentUsecaseDecorator := usecase.NewPaymentUsecaseEventDecorator(paymentUsecase, true)
 
 	// Controller initialization
-	paymentController := controller.NewPaymentController(paymentUsecase)
+	paymentController := controller.NewPaymentController(paymentUsecaseDecorator)
 
 	return &Application{
 		PaymentController: paymentController,

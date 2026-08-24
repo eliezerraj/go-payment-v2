@@ -1,20 +1,25 @@
 package usecase
 
 import (
+	"fmt"
 	"time"
 	"context"
 	"errors"
+	"encoding/json"
 
 	"go.uber.org/zap"
 
 	"github.com/eliezerraj/go-core/v3/logger"
+	gocore_kafka "github.com/eliezerraj/go-core/v3/event/kafka"
+	"github.com/eliezerraj/go-core/v3/event/kafka/producer"
 
 	"github.com/go-payment-v2/application/tracing"
 	"github.com/go-payment-v2/application/domain/entity"
 	"github.com/go-payment-v2/application/infrastructure/repository"
-	//"github.com/go-payment-v2/application/infrastructure/module"
 
 	"github.com/jackc/pgx/v5"
+
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -34,7 +39,6 @@ type IPaymentUseCase interface {
 	BeginTx(ctx context.Context, opts pgx.TxOptions) (pgx.Tx, error)
 	PaymentAdd(ctx context.Context, payment entity.Payment) (*entity.Payment, error)
 	PaymentGet(ctx context.Context, payment entity.Payment) (*entity.Payment, error)
-
 }
 
 func NewPaymentUseCase(paymentRepository repository.IPaymentRepository) *PaymentUsecase {
@@ -134,7 +138,7 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 func (o *PaymentUsecase) PaymentGet(ctx context.Context, payment entity.Payment) (*entity.Payment, error) {
 	logger.Info(ctx, "payment usecase PaymentGet called")
 	
-	// Tracing and metrics
+	// Tracing
 	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentUsecase.PaymentGet", trace.SpanKindInternal)
 	defer span.End()
 
@@ -146,4 +150,96 @@ func (o *PaymentUsecase) PaymentGet(ctx context.Context, payment entity.Payment)
 	}
 
 	return res_payment, nil
+}
+
+// -------------------------------------------------------------------------------------------------------
+// PaymentUsecaseEventDecorator is a decorator for the PaymentUsecase that adds event publishing functionality.
+type PaymentUsecaseEventDecorator struct {
+	next IPaymentUseCase
+	producerWorker *producer.ProducerWorker
+	enabled	bool
+}
+
+func NewPaymentUsecaseEventDecorator(next IPaymentUseCase, enabled bool) *PaymentUsecaseEventDecorator {
+	logger.InfoOutCtx("initializing payment usecase event decorator SUCCESSFULLY")
+
+	dialerConfig := gocore_kafka.DialerConfig{
+		Username:   "admin",
+		Password:   "admin",
+		Protocol:   "SASL_PLAINTEXT",
+		Mechanisms: "PLAIN",
+		Brokers:    "localhost:9092",
+	}
+
+	kafkaDialer := gocore_kafka.NewKafkaDialer(dialerConfig)
+	producerConfig := kafkaDialer.ProducerConfig("producer-01")
+	producerWorker, err := producer.NewProducerWorker(producerConfig)
+	if err != nil {
+		logger.FatalOutCtx("failed to create ProducerWorker", zap.Error(err))
+		return nil
+	}
+
+	logger.InfoOutCtx("ProducerWorker created successfully", zap.Any("producerConfig", producerConfig))
+	return &PaymentUsecaseEventDecorator{
+		next:          next,
+		producerWorker: producerWorker,
+		enabled:       enabled,
+	}
+}
+
+// PaymentAdd adds a new payment and publishes an event to Kafka if the decorator is enabled.
+func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment entity.Payment) (*entity.Payment, error) {
+	logger.Info(ctx, "PaymentUsecaseEventDecorator PaymentAdd called")
+
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentUsecaseEventDecorator.PaymentAdd", trace.SpanKindInternal)
+	defer span.End()
+
+	if !d.enabled {
+		logger.Info(ctx, "PaymentUsecaseEventDecorator is disabled, proceeding without event publishing")
+		return d.next.PaymentAdd(ctx, payment)
+	}
+
+	logger.Info(ctx, "PaymentUsecaseEventDecorator is enabled, proceeding with event publishing")
+
+	// Call the next use case in the chain
+	res_payment, err := d.next.PaymentAdd(ctx, payment)
+	if err != nil {
+		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to add payment", zap.Error(err))
+		return nil, err
+	}
+
+	// Here you would add logic to publish an event to Kafka or any other event bus.
+	logger.Info(ctx, "KAFKA PaymentUsecaseEventDecorator KAFKA ======>>>>>>> publishing")
+
+	key := fmt.Sprintf("payment:%v", res_payment.PaymentNumber)
+	topic := "payment.created"
+	payload_bytes, err := json.Marshal(res_payment)
+	if err != nil {
+		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to marshal payment", zap.Error(err))
+		return nil, err
+	}
+	kafkaHeaders := []kafka.Header{}
+	kafkaHeaders = append(kafkaHeaders, kafka.Header{Key: "x-request-id", Value: []byte("MY-CUSTOM-HEADER-001")})
+	err = d.producerWorker.ProduceMessage(topic, key, kafkaHeaders, payload_bytes)
+	if err != nil {
+		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to produce message", zap.Error(err))
+		return nil, err
+	}
+
+	logger.Info(ctx, "PaymentUsecaseEventDecorator: payment added and event published successfully")
+	return res_payment, nil
+}
+
+// PaymentGet retrieves a payment and publishes an event to Kafka if the decorator is enabled.
+func (d *PaymentUsecaseEventDecorator) PaymentGet(ctx context.Context, payment entity.Payment) (*entity.Payment, error) {
+	logger.Info(ctx, "PaymentUsecaseEventDecorator PaymentGet called")
+
+	return d.next.PaymentGet(ctx, payment)
+}
+
+// BeginTx starts a new database transaction with the specified options.
+func (d *PaymentUsecaseEventDecorator) BeginTx(ctx context.Context, opts pgx.TxOptions) (pgx.Tx, error) {
+	logger.Info(ctx, "PaymentUsecaseEventDecorator BeginTx called")
+
+	return d.next.BeginTx(ctx, opts)
 }

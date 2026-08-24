@@ -34,16 +34,16 @@ func NewApplicationAdapter(cfg *config.Config, application *application.Applicat
 
 // Adapter methods for ProductController 
 func (a *ApplicationAdapter) PaymentGet(ctxFiber *fiber.Ctx) error {
+	logger.InfoOutCtx("PaymentGet called")
+
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.PaymentGet", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
-	logger.Info(ctx, "PaymentGet called")
-
 	logger.Debug(
-		ctxWithTimeout,
+		ctx,
 		a.cfg.App.Name,
 		zap.ByteString("headers", utils.FormatHeadersAsJSON(ctxFiber.GetReqHeaders())),
 		zap.String("host", ctxFiber.Hostname()),
@@ -61,10 +61,10 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber *fiber.Ctx) error {
 		PaymentNumber: payment_number,
 	}
 
-	res, err := a.application.PaymentController.PaymentGet(ctxWithTimeout, payment)
+	res, err := a.application.PaymentController.PaymentGet(ctx, payment)
 	if err != nil {
-		logger.Error(ctxWithTimeout, "failed to get payment ", zap.Error(err))
-		errorResponse := external.NewResponseError(ctxWithTimeout,
+		logger.Error(ctx, "failed to get payment ", zap.Error(err))
+		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusNotFound,
 			fiber.ErrNotFound,
 			fiber.ErrNotFound.Message,
@@ -89,7 +89,7 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.PaymentAdd", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(

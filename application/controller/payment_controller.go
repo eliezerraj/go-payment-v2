@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"go.uber.org/zap"
 
 	"go.opentelemetry.io/otel/trace"
@@ -36,27 +35,38 @@ func (p *PaymentController) PaymentAdd(ctx context.Context, req external.Payment
 	defer span.End()
 
 	// Create the payment entity
-	payment := entity.Payment{
-		OrderID:       req.OrderID,
-		OrderNumber:   req.OrderNumber,
-		TransactionID: req.TransactionID,
-		Type:          req.Type,
-		Currency:      req.Currency,
-		Amount:        req.Amount,
+	order := entity.Order{
+		ID:          req.Order.ID,
+		OrderNumber: req.Order.OrderNumber,
 	}
 
-	// Create CreditCard entity if provided
-	if req.CreditCard != nil {
-		payment.CreditCard = &entity.CreditCard{
-			Pan:      req.CreditCard.Pan,
-			Holder:   req.CreditCard.Holder,
-			Password: req.CreditCard.Password,
-			CVV:      req.CreditCard.CVV,
+	paymentDetails := make([]*entity.PaymentDetail, len(req.PaymentDetail))
+
+	for i, paymentDetailReq := range req.PaymentDetail {
+		creditCard := entity.CreditCard{
+			Pan:            paymentDetailReq.CreditCard.Pan,
+			Holder:         paymentDetailReq.CreditCard.Holder,
+			Password:       paymentDetailReq.CreditCard.Password,
+			CVV:            paymentDetailReq.CreditCard.CVV,
 		}
-	} else {
-		logger.Error(ctx, "CreditCardRequest is nil in PaymentRequest")
-		return nil, errors.New("CreditCard is not provided informed")
+		paymentDetail := entity.PaymentDetail{
+			DetailDate: paymentDetailReq.DetailDate,
+			Status:     paymentDetailReq.Status,
+			Currency:   paymentDetailReq.Currency,
+			Amount:     paymentDetailReq.Amount,
+			CreditCard: &creditCard,
+		}
+		paymentDetails[i] = &paymentDetail
 	}
+
+	payment := entity.Payment{
+		TransactionID: req.TransactionID,
+		Type:          req.Type,
+		Order:         order,
+		PaymentDetail: paymentDetails,
+	}
+
+	logger.Info(ctx, "payment controller PaymentAdd: calling payment usecase PaymentAdd", zap.Any("payment", payment))
 
 	// Call the use case to add the order
 	res, err := p.paymentUseCase.PaymentAdd(ctx, payment)

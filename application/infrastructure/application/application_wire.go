@@ -89,7 +89,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 		MaxIdleConns:        cfg.HTTP.MaxIdleConns,
 		MaxIdleConnsPerHost: cfg.HTTP.MaxIdleConnsPerHost,
 		MaxConnsPerHost:     cfg.HTTP.MaxConnsPerHost,
-		ServiceName:         "go-payment-v2",
+		ServiceName:         cfg.App.Name,
 	}
 
 	_ = httpConfig
@@ -100,7 +100,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 
 	// UseCase initialization
 	paymentUsecase := usecase.NewPaymentUseCase(paymentRepository)
-	paymentUsecaseDecorator := usecase.NewPaymentUsecaseEventDecorator(paymentUsecase, true)
+	paymentUsecaseDecorator := usecase.NewPaymentUsecaseEventDecorator(paymentUsecase, cfg.KafkaProducer.DryRun)
 
 	// Controller initialization
 	paymentController := controller.NewPaymentController(paymentUsecaseDecorator)

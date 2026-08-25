@@ -91,6 +91,7 @@ type KafkaProducer struct {
 	Mechanism  string   `env:"KAFKA_PRODUCER_MECHANISM"`
 	Username   string   `env:"KAFKA_PRODUCER_USERNAME"`
 	Password   string   `env:"KAFKA_PRODUCER_PASSWORD"`
+	DryRun    bool     `env:"KAFKA_EVENT_DRY_RUN" envDefault:"false"`
 }
 
 type Inventory struct {

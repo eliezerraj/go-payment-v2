@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"github.com/google/uuid"
 	"fmt"
 	"time"
 	"context"
@@ -96,13 +97,10 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 	//-----------------------------------------------------------
 	// Business logic: Set default values for payment
 	createAt := time.Now().UTC()
-	payment.CreatedAt = createAt 
-	if payment.PaymentDate == (time.Time{}) {
-		payment.PaymentDate = createAt
-	}
-	payment.PaymentNumber = "pay:" + payment.OrderNumber
-	payment.Status = PaymentStatusPending
+	payment.PaymentNumber = "pay:" + payment.Order.OrderNumber
 	payment.TransactionID = "txn_" + payment.TransactionID
+	payment.Type = payment.Type
+	payment.CreatedAt = createAt
 
 	// Add the payment to the repository
 	res_payment, err = o.paymentRepository.PaymentAdd(ctx, tx, payment)
@@ -116,19 +114,29 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 	//-----------------------------------------------------------
 	// PaymentCard SECTION
 	//-----------------------------------------------------------
-	if payment.CreditCard == nil {
-		logger.Error(ctx, "payment usecase PaymentAdd: no credit card provided, skipping payment card addition")
-		return nil, errors.New("no credit card provided for payment")
-	}
+	for i, paymentDetail := range payment.PaymentDetail {
 
-	// Add the payment card to the repository
-	res_payment_card, err := o.paymentRepository.PaymentCardAdd(ctx, tx, payment)
-	if err != nil {
-		logger.Error(ctx, "payment usecase PaymentAdd failed to add payment card", zap.Error(err))
-		return nil, err
-	}
+		paymentDetail.Status = PaymentStatusPending
+		paymentDetail.ID = payment.ID
+		paymentDetail.CreatedAt = createAt
+		if paymentDetail.DetailDate == (time.Time{}) {
+			paymentDetail.DetailDate = createAt
+		}
 
-	res_payment.CreditCard = res_payment_card.CreditCard
+		if paymentDetail.CreditCard == nil {
+			logger.Error(ctx, "payment usecase PaymentAdd: no credit card provided, skipping payment card addition")
+			return nil, errors.New("no credit card provided for payment")
+		}
+		// Add the payment card to the repository
+		payment.PaymentDetail[i] = paymentDetail
+
+		res_payment_detail, err := o.paymentRepository.PaymentCardAdd(ctx, tx, payment)
+		if err != nil {
+			logger.Error(ctx, "payment usecase PaymentAdd failed to add payment card", zap.Error(err))
+			return nil, err
+		}
+		payment.PaymentDetail[i].ID = res_payment_detail.ID
+	}
 
 	logger.Info(ctx, "payment usecase PaymentAdd completed SUCCESSFULLY")
 	return res_payment, nil
@@ -148,6 +156,20 @@ func (o *PaymentUsecase) PaymentGet(ctx context.Context, payment entity.Payment)
 		logger.Error(ctx, "payment usecase PaymentGet failed", zap.Error(err))
 		return nil, err
 	}
+
+	// Set the payment ID for further processing
+	payment.ID = res_payment.ID
+
+	// Get the payment card details from the repository
+	res_payment_detail, err := o.paymentRepository.PaymentCardGet(ctx, payment)
+	if err != nil {
+		logger.Error(ctx, "payment usecase PaymentGet failed to get payment card", zap.Error(err))
+		return nil, err
+	}
+
+	res_payment.PaymentDetail = res_payment_detail
+
+	logger.Info(ctx, "payment usecase PaymentGet completed SUCCESSFULLY")
 
 	return res_payment, nil
 }
@@ -213,13 +235,25 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 
 	key := fmt.Sprintf("payment:%v", res_payment.PaymentNumber)
 	topic := "payment.created"
-	payload_bytes, err := json.Marshal(res_payment)
+	
+	event := entity.Event{
+		ID:   uuid.New().String(),
+		Date: time.Now(),
+		Type: topic,
+		Metadata: map[string]interface{}{
+			"payment_number": res_payment.PaymentNumber,
+		},
+		Data: res_payment,
+	}
+	
+	payload_bytes, err := json.Marshal(event)
 	if err != nil {
 		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to marshal payment", zap.Error(err))
 		return nil, err
 	}
 	kafkaHeaders := []kafka.Header{}
 	kafkaHeaders = append(kafkaHeaders, kafka.Header{Key: "x-request-id", Value: []byte("MY-CUSTOM-HEADER-001")})
+	
 	err = d.producerWorker.ProduceMessage(topic, key, kafkaHeaders, payload_bytes)
 	if err != nil {
 		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to produce message", zap.Error(err))

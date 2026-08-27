@@ -17,12 +17,16 @@ import (
 	"github.com/go-payment-v2/application/tracing"
 	"github.com/go-payment-v2/application/domain/entity"
 	"github.com/go-payment-v2/application/infrastructure/repository"
-
+	"github.com/go-payment-v2/application/config"
+	"github.com/go-payment-v2/application/shared/otelkafka"
+	
 	"github.com/jackc/pgx/v5"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	//"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
+
 )
 
 const (
@@ -30,6 +34,7 @@ const (
 	PaymentStatusPending = "pending"
 	// PaymentStatusCompleted represents the completed status of a payment.
 	PaymentStatusCompleted = "completed"
+	RequestIDHeaderName = "x-request-id"
 )
 
 type PaymentUsecase struct {
@@ -180,17 +185,18 @@ type PaymentUsecaseEventDecorator struct {
 	next IPaymentUseCase
 	producerWorker *producer.ProducerWorker
 	enabled	bool
+	kafkaProducer *config.KafkaProducer
 }
 
-func NewPaymentUsecaseEventDecorator(next IPaymentUseCase, enabled bool) *PaymentUsecaseEventDecorator {
+func NewPaymentUsecaseEventDecorator(next IPaymentUseCase, enabled bool, kafkaProducer config.KafkaProducer) *PaymentUsecaseEventDecorator {
 	logger.InfoOutCtx("initializing payment usecase event decorator SUCCESSFULLY")
 
 	dialerConfig := gocore_kafka.DialerConfig{
-		Username:   "admin",
-		Password:   "admin",
-		Protocol:   "SASL_PLAINTEXT",
-		Mechanisms: "PLAIN",
-		Brokers:    "localhost:9092",
+		Username:   kafkaProducer.Username,
+		Password:   kafkaProducer.Password,
+		Protocol:   kafkaProducer.Protocol,
+		Mechanisms: kafkaProducer.Mechanism,
+		Brokers:    kafkaProducer.BrokerList,
 	}
 
 	kafkaDialer := gocore_kafka.NewKafkaDialer(dialerConfig)
@@ -206,6 +212,7 @@ func NewPaymentUsecaseEventDecorator(next IPaymentUseCase, enabled bool) *Paymen
 		next:          next,
 		producerWorker: producerWorker,
 		enabled:       enabled,
+		kafkaProducer: &kafkaProducer,
 	}
 }
 
@@ -230,18 +237,26 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 		return nil, err
 	}
 
-	// Here you would add logic to publish an event to Kafka or any other event bus.
+	// ------------------------------------------
+	// Publish event to Kafka
+	// ------------------------------------------
 	logger.Info(ctx, "KAFKA PaymentUsecaseEventDecorator KAFKA ======>>>>>>> publishing")
 
 	key := fmt.Sprintf("payment:%v", res_payment.PaymentNumber)
-	topic := "payment.created"
+	topic := d.kafkaProducer.Topic
 	
+	// Set headers for the request. the const are in payment_module.go file
+	xrequestid, ok := ctx.Value(RequestIDHeaderName).(string)
+	if !ok {
+		xrequestid = "not-informed"
+	}
+
 	event := entity.Event{
 		ID:   uuid.New().String(),
 		Date: time.Now(),
 		Type: topic,
 		Metadata: map[string]interface{}{
-			"payment_number": res_payment.PaymentNumber,
+			"x-request-id": xrequestid,
 		},
 		Data: res_payment,
 	}
@@ -251,8 +266,10 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to marshal payment", zap.Error(err))
 		return nil, err
 	}
-	kafkaHeaders := []kafka.Header{}
-	kafkaHeaders = append(kafkaHeaders, kafka.Header{Key: "x-request-id", Value: []byte("MY-CUSTOM-HEADER-001")})
+
+	kafkaHeaders := otelkafka.KafkaHeaderCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, &kafkaHeaders)
+	kafkaHeaders.Set("x-request-id", xrequestid)
 	
 	err = d.producerWorker.ProduceMessage(topic, key, kafkaHeaders, payload_bytes)
 	if err != nil {

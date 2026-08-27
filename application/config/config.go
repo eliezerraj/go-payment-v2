@@ -85,7 +85,7 @@ type OtelEnv struct {
 }
 
 type KafkaProducer struct {
-	BrokerList []string `env:"KAFKA_PRODUCER_BROKER" envSeparator:","`
+	BrokerList string `env:"KAFKA_PRODUCER_BROKER" envSeparator:","`
 	Topic      string   `env:"KAFKA_PRODUCER_TOPIC"`
 	Protocol   string   `env:"KAFKA_PRODUCER_PROTOCOL"`
 	Mechanism  string   `env:"KAFKA_PRODUCER_MECHANISM"`

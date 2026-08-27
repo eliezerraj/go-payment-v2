@@ -100,7 +100,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 
 	// UseCase initialization
 	paymentUsecase := usecase.NewPaymentUseCase(paymentRepository)
-	paymentUsecaseDecorator := usecase.NewPaymentUsecaseEventDecorator(paymentUsecase, cfg.KafkaProducer.DryRun)
+	paymentUsecaseDecorator := usecase.NewPaymentUsecaseEventDecorator(paymentUsecase, cfg.KafkaProducer.DryRun, cfg.KafkaProducer)
 
 	// Controller initialization
 	paymentController := controller.NewPaymentController(paymentUsecaseDecorator)

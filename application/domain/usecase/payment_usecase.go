@@ -22,8 +22,6 @@ import (
 	
 	"github.com/jackc/pgx/v5"
 
-	//"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel"
 
@@ -200,7 +198,7 @@ func NewPaymentUsecaseEventDecorator(next IPaymentUseCase, enabled bool, kafkaPr
 	}
 
 	kafkaDialer := gocore_kafka.NewKafkaDialer(dialerConfig)
-	producerConfig := kafkaDialer.ProducerConfig("producer-01")
+	producerConfig := kafkaDialer.ProducerConfig(kafkaProducer.Name)
 	producerWorker, err := producer.NewProducerWorker(producerConfig)
 	if err != nil {
 		logger.FatalOutCtx("failed to create ProducerWorker", zap.Error(err))

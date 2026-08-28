@@ -5,6 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/go-payment-v2/application/tracing"
 	"github.com/go-payment-v2/application/config"
 	"github.com/go-payment-v2/application/infrastructure/application"
 	"github.com/go-payment-v2/application/domain/external"
@@ -14,7 +15,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type ApplicationAdapter struct {
@@ -33,17 +34,16 @@ func NewApplicationAdapter(cfg *config.Config, application *application.Applicat
 
 // Adapter methods for ProductController 
 func (a *ApplicationAdapter) PaymentGet(ctxFiber *fiber.Ctx) error {
+	logger.InfoOutCtx("PaymentGet called")
+
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	tracer := otel.Tracer("payment.adapter")
-	ctx, span := tracer.Start(ctxWithTimeout, "ApplicationAdapter.PaymentGet")
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
-	logger.Info(ctx, "PaymentGet called")
-
 	logger.Debug(
-		ctxWithTimeout,
+		ctx,
 		a.cfg.App.Name,
 		zap.ByteString("headers", utils.FormatHeadersAsJSON(ctxFiber.GetReqHeaders())),
 		zap.String("host", ctxFiber.Hostname()),
@@ -61,10 +61,10 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber *fiber.Ctx) error {
 		PaymentNumber: payment_number,
 	}
 
-	res, err := a.application.PaymentController.PaymentGet(ctxWithTimeout, payment)
+	res, err := a.application.PaymentController.PaymentGet(ctx, payment)
 	if err != nil {
-		logger.Error(ctxWithTimeout, "failed to get payment ", zap.Error(err))
-		errorResponse := external.NewResponseError(ctxWithTimeout,
+		logger.Error(ctx, "failed to get payment ", zap.Error(err))
+		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusNotFound,
 			fiber.ErrNotFound,
 			fiber.ErrNotFound.Message,
@@ -84,13 +84,16 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber *fiber.Ctx) error {
 
 // Adapter methods for PaymentController
 func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
+	logger.InfoOutCtx("PaymentAdd called")
+
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	logger.Info(ctxWithTimeout, "PaymentAdd called")
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.paymentAdd", trace.SpanKindInternal)
+	defer span.End()
 
 	logger.Debug(
-		ctxWithTimeout,
+		ctx,
 		a.cfg.App.Name,
 		zap.ByteString("headers", utils.FormatHeadersAsJSON(ctxFiber.GetReqHeaders())),
 		zap.String("host", ctxFiber.Hostname()),
@@ -101,8 +104,8 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
 	
 	payment := external.PaymentRequest{}
 	if err := ctxFiber.BodyParser(&payment); err != nil {
-		logger.Error(ctxWithTimeout, "failed to parse request body", zap.Error(err))
-		errorResponse := external.NewResponseError(ctxWithTimeout,
+		logger.Error(ctx, "failed to parse request body", zap.Error(err))
+		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusBadRequest,
 			fiber.ErrBadRequest,
 			fiber.ErrBadRequest.Message,
@@ -112,10 +115,10 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
-	res, err := a.application.PaymentController.PaymentAdd(ctxWithTimeout, payment)
+	res, err := a.application.PaymentController.PaymentAdd(ctx, payment)
 	if err != nil {
-		logger.Error(ctxWithTimeout, "failed to add payment", zap.Error(err))
-		errorResponse := external.NewResponseError(ctxWithTimeout,
+		logger.Error(ctx, "failed to add payment", zap.Error(err))
+		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusInternalServerError,
 			fiber.ErrInternalServerError,
 			fiber.ErrInternalServerError.Message,

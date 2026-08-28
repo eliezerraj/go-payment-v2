@@ -5,21 +5,25 @@ import (
 )
 
 type Payment struct {
+	ID				int		`json:"id,omitempty"`
+	PaymentNumber 	string	`json:"payment_number,omitempty"`
+	TransactionID 	string	`json:"transaction_id,omitempty"`
+	Type			string 	`json:"type,omitempty"`
+	Order			Order	`json:"order,omitempty"`	
+	PaymentDetail 	[]*PaymentDetail	`json:"payment_detail,omitempty"`
+	CreatedAt		time.Time 	`json:"created_at,omitempty"`
+	UpdatedAt		*time.Time 	`json:"updated_at,omitempty"`		
+}
+
+type PaymentDetail struct {
 	ID			int			`json:"id,omitempty"`
-	PaymentNumber string	`json:"payment_number,omitempty"`
-	TransactionID string	`json:"transaction_id,omitempty"`
-	OrderID     int         `json:"order_id,omitempty"`
-	OrderNumber	string		`json:"order_number,omitempty"`
-	Type		string 		`json:"type,omitempty"`
+	DetailDate	time.Time 	`json:"payment_detail_date,omitempty"`
 	Status		string 		`json:"status,omitempty"`
-	CustomerID	string 		`json:"customer_id,omitempty"`
-	PaymentDate	time.Time 	`json:"payment_date,omitempty"`
 	Currency	string 		`json:"currency,omitempty"`
 	Amount		float64 	`json:"amount,omitempty"`
 	CreditCard	*CreditCard	`json:"credit_card,omitempty"`
 	CreatedAt	time.Time 	`json:"created_at,omitempty"`
 	UpdatedAt	*time.Time 	`json:"updated_at,omitempty"`
-	StepProcess	*[]StepProcess `json:"step_process,omitempty"`			
 }
 
 type CreditCard struct {
@@ -35,7 +39,10 @@ type Order struct {
 	OrderNumber string		`json:"order_number,omitempty"`
 }
 
-type StepProcess struct {
-	Name		string  	`json:"step_process,omitempty"`
-	ProcessedAt	time.Time 	`json:"processed_at,omitempty"`
+type Event struct {
+	ID			string			`json:"event_id,omitempty"`
+	Date		time.Time	`json:"event_date,omitempty"`
+	Type		string		`json:"event_type,omitempty"`
+	Metadata	map[string]interface{}	`json:"metadata,omitempty"`
+	Data		interface{}	`json:"data,omitempty"`
 }

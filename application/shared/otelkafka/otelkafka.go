@@ -10,6 +10,7 @@ type KafkaHeaderCarrier []kafka.Header
 // Ensure it implements propagation.TextMapCarrier
 var _ propagation.TextMapCarrier = (*KafkaHeaderCarrier)(nil)
 
+// This is necessary to implement the propagation.TextMapCarrier interface for Kafka headers.
 func (c *KafkaHeaderCarrier) Get(key string) string {
     for _, h := range *c {
         if h.Key == key {
@@ -19,6 +20,7 @@ func (c *KafkaHeaderCarrier) Get(key string) string {
     return ""
 }
 
+// This is necessary to implement the propagation.TextMapCarrier interface for Kafka headers.
 func (c *KafkaHeaderCarrier) Set(key string, value string) {
     // Update if exists
     for i, h := range *c {
@@ -34,6 +36,7 @@ func (c *KafkaHeaderCarrier) Set(key string, value string) {
     })
 }
 
+// This is necessary to implement the propagation.TextMapCarrier interface for Kafka headers.
 func (c *KafkaHeaderCarrier) Keys() []string {
     keys := make([]string, 0, len(*c))
     for _, h := range *c {

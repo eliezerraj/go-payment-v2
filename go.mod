@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/caarlos0/env/v8 v8.0.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.15.0
 	github.com/eliezerraj/go-core v1.0.123
 	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/google/uuid v1.6.0
@@ -22,7 +23,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/confluentinc/confluent-kafka-go/v2 v2.15.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

@@ -28,10 +28,8 @@ import (
 )
 
 const (
-	// PaymentStatusPending represents the pending status of an order.
-	PaymentStatusPending = "pending"
-	// PaymentStatusCompleted represents the completed status of a payment.
-	PaymentStatusCompleted = "completed"
+	PaymentStatusPending = "payment:pending"
+	PaymentStatusCompleted = "payment:completed"
 	RequestIDHeaderName = "x-request-id"
 )
 
@@ -101,7 +99,7 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 	// Business logic: Set default values for payment
 	createAt := time.Now().UTC()
 	payment.PaymentNumber = "pay:" + payment.Order.OrderNumber
-	payment.TransactionID = "txn_" + payment.TransactionID
+	payment.TransactionID = payment.TransactionID // the transaction ID is provided externally
 	payment.Type = payment.Type
 	payment.CreatedAt = createAt
 
@@ -249,6 +247,7 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 		xrequestid = "not-informed"
 	}
 
+	// Create the event to be published to Kafka
 	event := entity.Event{
 		ID:   uuid.New().String(),
 		Date: time.Now(),
@@ -259,19 +258,22 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 		Data: res_payment,
 	}
 	
+	// Convert the event to JSON payload for Kafka
 	payload_bytes, err := json.Marshal(event)
 	if err != nil {
 		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to marshal payment", zap.Error(err))
 		return nil, err
 	}
 
+	// Prepare Kafka headers for tracing and request ID
 	kafkaHeaders := otelkafka.KafkaHeaderCarrier{}
 	otel.GetTextMapPropagator().Inject(ctx, &kafkaHeaders)
+	// Inject tracing context into Kafka headers
 	kafkaHeaders.Set("x-request-id", xrequestid)
-	
-	err = d.producerWorker.ProduceMessage(topic, key, kafkaHeaders, payload_bytes)
+	err = d.producerWorker.ProduceMessage(ctx,topic, key, kafkaHeaders, payload_bytes)
 	if err != nil {
 		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to produce message", zap.Error(err))
+
 		return nil, err
 	}
 

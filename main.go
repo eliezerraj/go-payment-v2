@@ -99,15 +99,6 @@ func setupMetrics(cfg *config.Config) {
     }()
 }
 
-// getCmd retrieves the command type from the environment variable or uses the default value.
-func getCmd(env string, val string) string {
-	cmd := os.Getenv(env)
-	if cmd == "" {
-		cmd = val
-	}
-	return cmd
-}
-
 func main() {
 	// Load environment configurations
 	cfg, err := config.Load()
@@ -128,16 +119,14 @@ func main() {
 
 	// Setup observability and metrics
 	setupObservability(cfg)
-	//setupMetrics(cfg)
+	setupMetrics(cfg)
 
 	// Setup signal handling for graceful shutdown
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, os.Interrupt, syscall.SIGTERM)
 
-	// Determine the command type and execute the corresponding process
-	cmd := getCmd("COMMAND_TYPE", "webserver")
-
-	switch cmd {
+	// Define the process type webserver or worker.
+	switch cfg.App.Type {
 	case "worker":
 		logger.InfoOutCtx("worker process NOT implemented")
 	case "webserver":

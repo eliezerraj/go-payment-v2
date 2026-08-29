@@ -58,6 +58,7 @@ type App struct {
 	Version     string `env:"VERSION" envDefault:"no-version"`
 	Env		  	string `env:"ENV" envDefault:"dev"`
 	Account	 	string `env:"ACCOUNT" envDefault:"local:localhost"`
+	Type      	string `env:"TYPE" envDefault:"webserver"`
 }
 
 type Log struct {

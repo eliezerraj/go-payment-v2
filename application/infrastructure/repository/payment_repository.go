@@ -31,6 +31,7 @@ type IPaymentRepository interface {
 	PaymentGet(ctx context.Context, payment entity.Payment) (*entity.Payment, error)
 	PaymentCardAdd(ctx context.Context, tx pgx.Tx, payment entity.Payment) (*entity.Payment, error)
 	PaymentCardGet(ctx context.Context, payment entity.Payment) ([]*entity.PaymentDetail, error)
+	PaymentListByOrderID(ctx context.Context, order entity.Order) ([]*entity.Payment, error)
 }
 
 func NewPaymentRepository(dbConnector connector.IDatabaseConnector) IPaymentRepository {
@@ -282,4 +283,77 @@ func (p *PaymentRepository) PaymentCardGet(ctx context.Context, payment entity.P
 	}
 
 	return paymentDetails, nil
+}
+
+func (p *PaymentRepository) PaymentListByOrderID(ctx context.Context, order entity.Order) (res_payments []*entity.Payment, err error) {
+	logger.Info(ctx, "payment repository PaymentListByOrderID called", zap.Any("order", order))
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentListByOrderID", trace.SpanKindInternal)
+	defer span.End()
+
+	meter := otel.Meter("go-payment-v2.repository")
+	counter, _ := meter.Int64Counter("db_payment_list_by_order_id_requests_total")
+	histogram, _ := meter.Float64Histogram("db_payment_list_by_order_id_duration_seconds")
+	start := time.Now()
+
+	counter.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("operation", "PaymentListByOrderID"),
+	))
+
+	// Defer function to handle error logging and metrics recording
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			logger.Error(ctx, "payment repository PaymentListByOrderID failed", zap.Error(err))
+		}
+		histogram.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(
+			attribute.String("operation", "PaymentListByOrderID"),
+		))
+	}()
+	
+	query := `select p.id,
+					p.transaction_id,
+					p.payment_number,
+					p.type,
+					p.created_at,
+					pd.fk_pan, 
+					pd.currency,
+					pd.amount,
+					pd.created_at,
+					c.holder 
+			from payment p,
+				payment_detail pd,
+				card c
+			where p.id = pd.fk_payment_id 
+			and c.pan = pd.fk_pan
+			and p.fk_order_id = $1`
+
+	connectorReader := p.dbConnector.Reader()
+	rows, err := connectorReader.Query(ctx, query, order.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var payments []*entity.Payment	
+	for rows.Next() {
+		payment := &entity.Payment{}
+		paymentDetails := []*entity.PaymentDetail{}
+		paymentDetail := entity.PaymentDetail{
+			CreditCard: &entity.CreditCard{},
+		}
+		err = rows.Scan(&payment.ID, &payment.TransactionID, &payment.PaymentNumber, &payment.Type, &payment.CreatedAt, &paymentDetail.CreditCard.Pan, &paymentDetail.Currency, &paymentDetail.Amount, &paymentDetail.CreatedAt, &paymentDetail.CreditCard.Holder)
+		if err != nil {
+			return nil, err
+		}
+		paymentDetails = append(paymentDetails, &paymentDetail)
+		payment.PaymentDetail = paymentDetails
+		payment.Order = order
+		res_payments = append(res_payments, payment)
+		payments = append(payments, payment)
+	}
+
+	return payments, nil
 }

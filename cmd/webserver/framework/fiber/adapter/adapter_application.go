@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"strconv"
 
 	"go.uber.org/zap"
 
@@ -134,4 +135,61 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
 	}
 
 	return ctxFiber.Status(fiber.StatusCreated).JSON(resp)
+}
+
+func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber *fiber.Ctx) error {
+	logger.InfoOutCtx("PaymentListByOrderID called")
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+	defer cancel()
+
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.PaymentListByOrderID", trace.SpanKindInternal)
+	defer span.End()
+
+	logger.Debug(
+		ctx,
+		a.cfg.App.Name,
+		zap.ByteString("headers", utils.FormatHeadersAsJSON(ctxFiber.GetReqHeaders())),
+		zap.String("host", ctxFiber.Hostname()),
+		zap.String("path", ctxFiber.Path()),
+		zap.ByteString("query", ctxFiber.Request().URI().QueryString()),
+		zap.ByteString("body", ctxFiber.Body()),
+	)
+
+	number := ctxFiber.Params("order_id")
+	if number == "" {
+		number = ctxFiber.Query("order_id")
+	}
+
+	order := external.OrderRequest{
+		OrderNumber: number,
+	}
+
+	if id, err := strconv.Atoi(number); err == nil {
+		order.ID = id
+	}
+
+	paymentRequest := external.PaymentRequest{
+		Order: order,
+	}
+
+	res, err := a.application.PaymentController.PaymentListByOrderID(ctx, paymentRequest)
+	if err != nil {
+		logger.Error(ctx, "failed to list payments by order ID", zap.Error(err))
+		errorResponse := external.NewResponseError(ctx,
+			fiber.StatusInternalServerError,
+			fiber.ErrInternalServerError,
+			fiber.ErrInternalServerError.Message,
+			"failed to list payments by order ID",
+			err.Error(),
+			external.BUSSINESS_ERROR)
+		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
+	}
+
+	resp := external.PaymentResponse{
+		Response: "Payments retrieved successfully",
+		Payment: res,
+	}
+
+	return ctxFiber.Status(fiber.StatusOK).JSON(resp)
 }

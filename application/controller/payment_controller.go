@@ -99,3 +99,25 @@ func (p *PaymentController) PaymentGet(ctx context.Context, req external.Payment
 
 	return res, nil
 }
+
+func (p *PaymentController) PaymentListByOrderID(ctx context.Context, req external.PaymentRequest) ([]*entity.Payment, error) {
+	logger.Info(ctx, "payment controller PaymentListByOrderID called")
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentController.PaymentListByOrderID", trace.SpanKindInternal)
+	defer span.End()
+
+	order := entity.Order{
+		ID:          req.Order.ID,
+		OrderNumber: req.Order.OrderNumber,
+	}
+
+	// Call the use case to get the payment list by order ID
+	res, err := p.paymentUseCase.PaymentListByOrderID(ctx, order)
+	if err != nil {
+		logger.Error(ctx, "payment controller PaymentListByOrderID failed", zap.Error(err))
+		return nil, err
+	}
+
+	return res, nil
+}

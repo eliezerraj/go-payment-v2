@@ -12,16 +12,25 @@ import (
 	"github.com/go-payment-v2/application/domain/usecase"
 	"github.com/go-payment-v2/application/domain/external"
 	"github.com/go-payment-v2/application/domain/entity"
+	"github.com/go-payment-v2/application/controller/validator"
 )
 
 type PaymentController struct {
+	schema        validator.Schema
 	paymentUseCase usecase.IPaymentUseCase
 }
 
 func NewPaymentController(paymentUseCase usecase.IPaymentUseCase) *PaymentController {
 	logger.InfoOutCtx("initializing payment controller SUCCESSFULLY")
 
+	schema := validator.Schema{
+		Validate: func(ctx context.Context, data any) error {
+			return nil
+		},
+	}
+
 	return &PaymentController{
+		schema: schema,
 		paymentUseCase: paymentUseCase,
 	}
 }
@@ -33,6 +42,11 @@ func (p *PaymentController) PaymentAdd(ctx context.Context, req external.Payment
 	// Tracing and metrics
 	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentController.PaymentAdd", trace.SpanKindInternal)
 	defer span.End()
+
+	// Schema validation
+	if err := p.schema.PaymentAddSchema().Validate(ctx, req); err != nil {
+		return nil, err
+	}
 
 	// Create the payment entity
 	order := entity.Order{

@@ -26,7 +26,7 @@ type PaymentRequest struct {
 	PaymentNumber 	string	`json:"payment_number,omitempty"`
 	TransactionID	string	`json:"transaction_id,omitempty"`
 	Type			string	`json:"type,omitempty"`
-	Order			OrderRequest	`json:"order,omitempty"`
+	Order			*OrderRequest	`json:"order,omitempty"`
 	PaymentDetail	[]*PaymentDetailRequest	`json:"payment_detail,omitempty"`
 }
 

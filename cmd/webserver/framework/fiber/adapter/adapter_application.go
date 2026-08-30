@@ -170,7 +170,7 @@ func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber *fiber.Ctx) error {
 	}
 
 	paymentRequest := external.PaymentRequest{
-		Order: order,
+		Order: &order,
 	}
 
 	res, err := a.application.PaymentController.PaymentListByOrderID(ctx, paymentRequest)

@@ -12,16 +12,25 @@ import (
 	"github.com/go-payment-v2/application/domain/usecase"
 	"github.com/go-payment-v2/application/domain/external"
 	"github.com/go-payment-v2/application/domain/entity"
+	"github.com/go-payment-v2/application/controller/validator"
 )
 
 type PaymentController struct {
+	schema        validator.Schema
 	paymentUseCase usecase.IPaymentUseCase
 }
 
 func NewPaymentController(paymentUseCase usecase.IPaymentUseCase) *PaymentController {
 	logger.InfoOutCtx("initializing payment controller SUCCESSFULLY")
 
+	schema := validator.Schema{
+		Validate: func(ctx context.Context, data any) error {
+			return nil
+		},
+	}
+
 	return &PaymentController{
+		schema: schema,
 		paymentUseCase: paymentUseCase,
 	}
 }
@@ -33,6 +42,11 @@ func (p *PaymentController) PaymentAdd(ctx context.Context, req external.Payment
 	// Tracing and metrics
 	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentController.PaymentAdd", trace.SpanKindInternal)
 	defer span.End()
+
+	// Schema validation
+	if err := p.schema.PaymentAddSchema().Validate(ctx, req); err != nil {
+		return nil, err
+	}
 
 	// Create the payment entity
 	order := entity.Order{
@@ -94,6 +108,28 @@ func (p *PaymentController) PaymentGet(ctx context.Context, req external.Payment
 	res, err := p.paymentUseCase.PaymentGet(ctx, payment)
 	if err != nil {
 		logger.Error(ctx, "payment controller PaymentGet failed", zap.Error(err))
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (p *PaymentController) PaymentListByOrderID(ctx context.Context, req external.PaymentRequest) ([]*entity.Payment, error) {
+	logger.Info(ctx, "payment controller PaymentListByOrderID called")
+
+	// Tracing and metrics
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentController.PaymentListByOrderID", trace.SpanKindInternal)
+	defer span.End()
+
+	order := entity.Order{
+		ID:          req.Order.ID,
+		OrderNumber: req.Order.OrderNumber,
+	}
+
+	// Call the use case to get the payment list by order ID
+	res, err := p.paymentUseCase.PaymentListByOrderID(ctx, order)
+	if err != nil {
+		logger.Error(ctx, "payment controller PaymentListByOrderID failed", zap.Error(err))
 		return nil, err
 	}
 

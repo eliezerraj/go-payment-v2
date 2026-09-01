@@ -41,6 +41,7 @@ type IPaymentUseCase interface {
 	BeginTx(ctx context.Context, opts pgx.TxOptions) (pgx.Tx, error)
 	PaymentAdd(ctx context.Context, payment entity.Payment) (*entity.Payment, error)
 	PaymentGet(ctx context.Context, payment entity.Payment) (*entity.Payment, error)
+	PaymentListByOrderID(ctx context.Context, order entity.Order) ([]*entity.Payment, error)
 }
 
 func NewPaymentUseCase(paymentRepository repository.IPaymentRepository) *PaymentUsecase {
@@ -175,6 +176,24 @@ func (o *PaymentUsecase) PaymentGet(ctx context.Context, payment entity.Payment)
 	return res_payment, nil
 }
 
+func (o *PaymentUsecase) PaymentListByOrderID(ctx context.Context, order entity.Order) ([]*entity.Payment, error) {
+	logger.Info(ctx, "payment usecase PaymentListByOrderID called")
+
+	// Tracing
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentUsecase.PaymentListByOrderID", trace.SpanKindInternal)
+	defer span.End()
+
+	// Get the payment list from the repository
+	payments, err := o.paymentRepository.PaymentListByOrderID(ctx, order)
+	if err != nil {
+		logger.Error(ctx, "payment usecase PaymentListByOrderID failed", zap.Error(err))
+		return nil, err
+	}
+
+	logger.Info(ctx, "payment usecase PaymentListByOrderID completed SUCCESSFULLY")
+	return payments, nil
+}
+
 // -------------------------------------------------------------------------------------------------------
 // PaymentUsecaseEventDecorator is a decorator for the PaymentUsecase that adds event publishing functionality.
 type PaymentUsecaseEventDecorator struct {
@@ -293,4 +312,10 @@ func (d *PaymentUsecaseEventDecorator) BeginTx(ctx context.Context, opts pgx.TxO
 	logger.Info(ctx, "PaymentUsecaseEventDecorator BeginTx called")
 
 	return d.next.BeginTx(ctx, opts)
+}
+
+func (d *PaymentUsecaseEventDecorator) PaymentListByOrderID(ctx context.Context, order entity.Order) ([]*entity.Payment, error) {
+	logger.Info(ctx, "PaymentUsecaseEventDecorator PaymentListByOrderID called")
+
+	return d.next.PaymentListByOrderID(ctx, order)
 }

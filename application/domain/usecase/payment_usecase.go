@@ -289,7 +289,7 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 	otel.GetTextMapPropagator().Inject(ctx, &kafkaHeaders)
 	// Inject tracing context into Kafka headers
 	kafkaHeaders.Set("x-request-id", xrequestid)
-	err = d.producerWorker.ProduceMessage(ctx,topic, key, kafkaHeaders, payload_bytes)
+	err = d.producerWorker.ProduceMessage(ctx, topic, key, kafkaHeaders, payload_bytes)
 	if err != nil {
 		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to produce message", zap.Error(err))
 

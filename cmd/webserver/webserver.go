@@ -31,7 +31,7 @@ func NewWebServer(cfg *config.Config) *WebServer {
 	}
 
 	fiberServer := fiber.NewFiberServer(cfg)
-	fiberServer.SetupRoutes(application)
+	fiberServer.SetupRoutes(cfg, application)
 	return &WebServer{
 		cfg: cfg,
 		fiberServer: fiberServer,

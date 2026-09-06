@@ -51,6 +51,7 @@ type Authorization struct {
 	DryRun  			bool   `env:"AUTHORIZATION_DRY_RUN,required"`
 	JwksURL 			string `env:"AUTHORIZATION_JWKS_URL"`
 	RequiredAuthHeader  bool   `env:"AUTHORIZATION_REQUIRED_HEADER"`
+	Timeout             time.Duration `env:"AUTHORIZATION_TIMEOUT" envDefault:"15s"`
 }
 
 type App struct {

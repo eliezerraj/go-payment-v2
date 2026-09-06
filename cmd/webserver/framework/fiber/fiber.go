@@ -1,6 +1,11 @@
 package fiber
 
 import (
+	"time"
+	"context"
+	
+	"go.uber.org/zap"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/json-iterator/go"
 
@@ -12,6 +17,7 @@ import (
 	"github.com/go-payment-v2/cmd/webserver/framework/fiber/middleware"
 
 	"github.com/eliezerraj/go-core/v3/logger"
+	"github.com/eliezerraj/go-core/v3/auth"
 )
 
 // Create a new Server configuration.
@@ -90,10 +96,22 @@ func setupMiddleware(cfg *config.Config, fiberApp *fiber.App) {
 }
 
 // SetupRoutes sets up the routes for the Fiber server using the provided application instance.
-func (s *FiberServer) SetupRoutes(application *application.Application) {
+func (s *FiberServer) SetupRoutes(cfg *config.Config, application *application.Application) {
 	logger.InfoOutCtx("setting up routes for fiber server SUCCESSFULLY")
 
 	root := s.FiberApp.Group("/")
+
+	// Create the AuthService instance and retrieve the JWKS URL
+	authService := auth.NewAuthService(	cfg.Authorization.JwksURL, 
+										cfg.Authorization.DryRun, 
+										cfg.Authorization.HeaderKey, 
+										cfg.Authorization.Timeout*time.Second)
+
+	// Retrieve the JWKS URL from the auth service
+	err := authService.GetJwksUrl(context.Background())
+	if err != nil {
+		logger.WarnOutCtx("Failed to get JWKS URL", zap.Error(err))
+	}
 
 	// Create adapters for controllers						
 	adapters := newAdapters(s.cfg, application)
@@ -103,7 +121,16 @@ func (s *FiberServer) SetupRoutes(application *application.Application) {
 	appRoutes.Get("/info", adapters.metadataAdp.InfoGet)
 	appRoutes.Get("/echo-header", adapters.metadataAdp.HeadersGet)
 	appRoutes.Get("/echo-context", adapters.metadataAdp.ContextGet)
-	appRoutes.Get("/payment/:payment_number", middleware.MetricsMiddleware(adapters.applicationAdp.PaymentGet))
-	appRoutes.Post("/payment", middleware.MetricsMiddleware(adapters.applicationAdp.PaymentAdd))
-	appRoutes.Get("/payment/order/:order_id", middleware.MetricsMiddleware(adapters.applicationAdp.PaymentListByOrderID))
+
+	appRoutes.Get("/payment/:payment_number", 
+					authService.FiberAuthorizationMiddleware(),
+					middleware.MetricsMiddleware(adapters.applicationAdp.PaymentGet))
+	
+	appRoutes.Post("/payment", 
+					authService.FiberAuthorizationMiddleware(),
+					middleware.MetricsMiddleware(adapters.applicationAdp.PaymentAdd))
+	
+	appRoutes.Get("/payment/order/:order_id", 
+					authService.FiberAuthorizationMiddleware(),
+					middleware.MetricsMiddleware(adapters.applicationAdp.PaymentListByOrderID))
 }

@@ -21,7 +21,7 @@ const CLIENT_ERROR = "client_error"
 type Error struct {
 	OriginalError error      `json:"-"`
 	InnerError    InnerError `json:"error"`
-	StatusCode    int        `json:"-"`
+	StatusCode    int        `json:"status_code"`
 	Type          string     `json:"type"`
 	Reason        string     `json:"reason"`
 }

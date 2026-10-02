@@ -19,14 +19,14 @@ type WebServer struct {
 }
 
 func NewWebServer(cfg *config.Config) *WebServer {
-	logger.InfoOutCtx("initializing webserver SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing webserver SUCCESSFULLY")
 
 	_, cancel := context.WithTimeout(context.Background(), cfg.Database.ConnTimeout)
 	defer cancel()
 
 	application, err := application.NewApplication(cfg)
 	if err != nil {
-		logger.FatalOutCtx("failed to initialize application", zap.Error(err))
+		logger.Fatal(context.Background(), "failed to initialize application", zap.Error(err))
 		os.Exit(1)
 	}
 
@@ -39,16 +39,15 @@ func NewWebServer(cfg *config.Config) *WebServer {
 }
 
 func (s *WebServer) Run() {
-	logger.InfoOutCtx("starting fiber server on port: " + s.cfg.HTTP.Port)
+	logger.Info(context.Background(), "starting fiber server on port: " + s.cfg.HTTP.Port)
 
 	if err := s.fiberServer.FiberApp.Listen(":" + s.cfg.HTTP.Port); err != nil {
-		logger.FatalOutCtx("failed to start HTTP server", zap.Error(err))
+		logger.Fatal(context.Background(), "failed to start HTTP server", zap.Error(err))
 	}
 }
 
 func (s *WebServer) Shutdown() {
-	logger.InfoOutCtx("webserver is shutting down SUCCESSFULLY")
-
+	logger.Info(context.Background(), "webserver is shutting down SUCCESSFULLY")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := s.fiberServer.FiberApp.Shutdown(); err != nil {

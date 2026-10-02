@@ -6,7 +6,8 @@ import (
 	"strings"
 	"net/http"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
+
 	"github.com/google/uuid"
 
 	"go.opentelemetry.io/otel"
@@ -19,7 +20,7 @@ const RequestIDHeaderName = "x-request-id"
 
 // AuthorizationMiddleware is a middleware function that checks for the presence of an Authorization header in the request. If the header is missing, it returns a 401 Unauthorized response.
 func AuthorizationMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		c.Accepts("application/json")
 
 		authHeader := c.Get("Authorization")
@@ -34,7 +35,7 @@ func AuthorizationMiddleware() fiber.Handler {
 
 // HeaderMiddleware is a middleware function that sets security and CORS headers for the response.
 func HeaderMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 
 		c.Accepts("application/json")
 
@@ -67,15 +68,15 @@ func HeaderMiddleware() fiber.Handler {
 
 // RequestIDMiddleware is a middleware function that generates a unique request ID for each incoming request and adds it to the request context. If the request already has a request ID in the "x-request-id" header, it uses that value instead of generating a new one.
 func RequestIDMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		requestID := c.Get(RequestIDHeaderName)
 		if requestID == "" {
 			requestID = uuid.NewString()
 		}
 
 		c.Set(RequestIDHeaderName, requestID)
-		ctx := context.WithValue(c.UserContext(), RequestIDHeaderName, requestID)
-		c.SetUserContext(ctx)
+		ctx := context.WithValue(c.Context(), RequestIDHeaderName, requestID)
+		c.SetContext(ctx)
 
 		return c.Next()
 	}
@@ -83,7 +84,7 @@ func RequestIDMiddleware() fiber.Handler {
 
 // MetricsMiddleware is a middleware function that can be used to collect metrics for each incoming request. It is currently a placeholder and does not implement any metrics collection logic.
 func MetricsMiddleware(next fiber.Handler) fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
         start := time.Now()
         err := next(c)
 
@@ -99,13 +100,13 @@ func MetricsMiddleware(next fiber.Handler) fiber.Handler {
         counter, _ := meter.Int64Counter("http_custom_requests_total")
         histogram, _ := meter.Float64Histogram("http_custom_request_duration_seconds")
 
-        counter.Add(c.UserContext(), 1, metric.WithAttributes(
+        counter.Add(c.Context(), 1, metric.WithAttributes(
             attribute.String("method", c.Method()),
             attribute.String("path", routePath),
             attribute.Int("status_code", c.Response().StatusCode()),
         ))
 
-        histogram.Record(c.UserContext(), time.Since(start).Seconds(), metric.WithAttributes(
+        histogram.Record(c.Context(), time.Since(start).Seconds(), metric.WithAttributes(
             attribute.String("method", c.Method()),
             attribute.String("path", c.Path()),
         ))
@@ -117,7 +118,7 @@ func MetricsMiddleware(next fiber.Handler) fiber.Handler {
 
 // TraceExtractionMiddleware is a middleware function that extracts the trace context from incoming requests and sets it in the request context. This allows for distributed tracing across services.
 func TraceExtractionMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
+	return func(c fiber.Ctx) error {
 		headerMap := make(http.Header)
 		for k, values := range c.GetReqHeaders() {
 			for _, v := range values {
@@ -126,8 +127,8 @@ func TraceExtractionMiddleware() fiber.Handler {
 		}
 
 		propagator := otel.GetTextMapPropagator()
-		ctx := propagator.Extract(c.UserContext(), propagation.HeaderCarrier(headerMap))
-		c.SetUserContext(ctx)
+		ctx := propagator.Extract(c.Context(), propagation.HeaderCarrier(headerMap))
+		c.SetContext(ctx)
 
 		return c.Next()
 	}

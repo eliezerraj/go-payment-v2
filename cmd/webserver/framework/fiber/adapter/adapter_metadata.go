@@ -2,7 +2,7 @@ package adapter
 
 import (
 	"context"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 
 	"github.com/eliezerraj/go-core/v3/logger"
 
@@ -13,7 +13,7 @@ type MetadataAdapter struct {
 }
 
 func NewMetadataAdapter(cfg *config.Config) *MetadataAdapter {
-	logger.InfoOutCtx("initializing metadata adapter SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing metadata adapter SUCCESSFULLY")
 
 	return &MetadataAdapter{
 		cfg: cfg,
@@ -21,16 +21,16 @@ func NewMetadataAdapter(cfg *config.Config) *MetadataAdapter {
 }
 
 // HealthGet handles the health check endpoint. It responds with a JSON object indicating the service status.
-func (c *MetadataAdapter) HealthGet(ctxFiber *fiber.Ctx) error {
-	_, cancel := context.WithTimeout(ctxFiber.UserContext(), c.cfg.HTTP.Timeout)
+func (c *MetadataAdapter) HealthGet(ctxFiber fiber.Ctx) error {
+	_, cancel := context.WithTimeout(ctxFiber.Context(), c.cfg.HTTP.Timeout)
 	defer cancel()
 
 	return ctxFiber.Status(fiber.StatusOK).JSON(fiber.Map{"status": "ok"})
 }
 
 // ContextGet handles the context echo endpoint. It responds with a JSON object containing request headers, method, path, and context information.
-func (c *MetadataAdapter) ContextGet(ctxFiber *fiber.Ctx) error {
-	_, cancel := context.WithTimeout(ctxFiber.UserContext(), c.cfg.HTTP.Timeout)
+func (c *MetadataAdapter) ContextGet(ctxFiber fiber.Ctx) error {
+	_, cancel := context.WithTimeout(ctxFiber.Context(), c.cfg.HTTP.Timeout)
 	defer cancel()
 
 	return ctxFiber.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -42,8 +42,8 @@ func (c *MetadataAdapter) ContextGet(ctxFiber *fiber.Ctx) error {
 }
 
 // HeadersGet handles the headers echo endpoint. It responds with a JSON object containing the request headers.
-func (c *MetadataAdapter) HeadersGet(ctxFiber *fiber.Ctx) error {
-	_, cancel := context.WithTimeout(ctxFiber.UserContext(), c.cfg.HTTP.Timeout)
+func (c *MetadataAdapter) HeadersGet(ctxFiber fiber.Ctx) error {
+	_, cancel := context.WithTimeout(ctxFiber.Context(), c.cfg.HTTP.Timeout)
 	defer cancel()
 
 	return ctxFiber.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -51,6 +51,6 @@ func (c *MetadataAdapter) HeadersGet(ctxFiber *fiber.Ctx) error {
 	})
 }
 
-func (c *MetadataAdapter) InfoGet(ctxFiber *fiber.Ctx) error {
+func (c *MetadataAdapter) InfoGet(ctxFiber fiber.Ctx) error {
 	return ctxFiber.Status(fiber.StatusOK).JSON(fiber.Map{"info": c.cfg})
 }

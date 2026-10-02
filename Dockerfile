@@ -1,7 +1,7 @@
 # docker build -t go-payment-v2 .
 # docker run -dit --name go-payment-v2 -p 7100:7100 go-payment-v2
 
-FROM golang:1.25 AS builder
+FROM golang:1.26 AS builder
 
 RUN apt-get update && apt-get install bash && apt-get install -y --no-install-recommends ca-certificates
 

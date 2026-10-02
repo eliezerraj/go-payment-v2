@@ -35,7 +35,7 @@ type IPaymentRepository interface {
 }
 
 func NewPaymentRepository(dbConnector connector.IDatabaseConnector) IPaymentRepository {
-	logger.InfoOutCtx("initializing payment repository SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing payment repository SUCCESSFULLY")
 
 	return &PaymentRepository{
 		dbConnector: dbConnector,
@@ -43,11 +43,11 @@ func NewPaymentRepository(dbConnector connector.IDatabaseConnector) IPaymentRepo
 }
 
 func (p *PaymentRepository) BeginTx(ctx context.Context, opts pgx.TxOptions) (pgx.Tx, error) {
-	logger.InfoOutCtx("payment repository BeginTx called")
+	logger.Info(ctx, "payment repository BeginTx called")
 
 	tx, err := p.dbConnector.Writer().BeginTx(ctx, opts)
 	if err != nil {
-		logger.ErrorOutCtx("payment repository BeginTx failed", zap.Error(err))
+		logger.Error(ctx, "payment repository BeginTx failed", zap.Error(err))
 		return nil, err
 	}
 

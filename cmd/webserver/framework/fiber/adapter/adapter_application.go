@@ -14,7 +14,7 @@ import (
 	"github.com/eliezerraj/go-core/v3/logger"
 	"github.com/eliezerraj/go-core/v3/http/utils"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -25,7 +25,7 @@ type ApplicationAdapter struct {
 }
 
 func NewApplicationAdapter(cfg *config.Config, application *application.Application) *ApplicationAdapter {
-	logger.InfoOutCtx("initializing application adapter SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing application adapter SUCCESSFULLY")
 
 	return &ApplicationAdapter{
 		cfg:         cfg,
@@ -34,10 +34,10 @@ func NewApplicationAdapter(cfg *config.Config, application *application.Applicat
 }
 
 // Adapter methods for ProductController 
-func (a *ApplicationAdapter) PaymentGet(ctxFiber *fiber.Ctx) error {
-	logger.InfoOutCtx("PaymentGet called")
+func (a *ApplicationAdapter) PaymentGet(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "PaymentGet called")
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
 	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.paymentGet", trace.SpanKindInternal)
@@ -84,10 +84,10 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber *fiber.Ctx) error {
 }
 
 // Adapter methods for PaymentController
-func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
-	logger.InfoOutCtx("PaymentAdd called")
+func (a *ApplicationAdapter) PaymentAdd(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "PaymentAdd called")
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
 	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.paymentAdd", trace.SpanKindInternal)
@@ -104,7 +104,7 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
 	)
 	
 	payment := external.PaymentRequest{}
-	if err := ctxFiber.BodyParser(&payment); err != nil {
+	if err := ctxFiber.Bind().Body(&payment); err != nil {
 		logger.Error(ctx, "failed to parse request body", zap.Error(err))
 		errorResponse := external.NewResponseError(ctx,
 			fiber.StatusBadRequest,
@@ -137,10 +137,10 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber *fiber.Ctx) error {
 	return ctxFiber.Status(fiber.StatusCreated).JSON(resp)
 }
 
-func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber *fiber.Ctx) error {
-	logger.InfoOutCtx("PaymentListByOrderID called")
+func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber fiber.Ctx) error {
+	logger.Info(ctxFiber.Context(), "PaymentListByOrderID called")
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.UserContext(), a.cfg.HTTP.Timeout)
+	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
 	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.PaymentListByOrderID", trace.SpanKindInternal)

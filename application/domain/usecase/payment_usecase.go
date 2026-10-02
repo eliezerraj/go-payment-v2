@@ -45,7 +45,7 @@ type IPaymentUseCase interface {
 }
 
 func NewPaymentUseCase(paymentRepository repository.IPaymentRepository) *PaymentUsecase {
-	logger.InfoOutCtx("initializing payment usecase SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing payment usecase SUCCESSFULLY")
 
 	return &PaymentUsecase{
 		paymentRepository: paymentRepository,
@@ -204,7 +204,7 @@ type PaymentUsecaseEventDecorator struct {
 }
 
 func NewPaymentUsecaseEventDecorator(next IPaymentUseCase, enabled bool, kafkaProducer config.KafkaProducer) *PaymentUsecaseEventDecorator {
-	logger.InfoOutCtx("initializing payment usecase event decorator SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing payment usecase event decorator SUCCESSFULLY")
 
 	dialerConfig := gocore_kafka.DialerConfig{
 		Username:   kafkaProducer.Username,
@@ -218,11 +218,11 @@ func NewPaymentUsecaseEventDecorator(next IPaymentUseCase, enabled bool, kafkaPr
 	producerConfig := kafkaDialer.ProducerConfig(kafkaProducer.Name)
 	producerWorker, err := producer.NewProducerWorker(producerConfig)
 	if err != nil {
-		logger.FatalOutCtx("failed to create ProducerWorker", zap.Error(err))
+		logger.Fatal(context.Background(), "failed to create ProducerWorker", zap.Error(err))
 		return nil
 	}
 
-	logger.InfoOutCtx("ProducerWorker created successfully", zap.Any("producerConfig", producerConfig))
+	logger.Info(context.Background(), "ProducerWorker created successfully", zap.Any("producerConfig", producerConfig))
 	return &PaymentUsecaseEventDecorator{
 		next:          next,
 		producerWorker: producerWorker,

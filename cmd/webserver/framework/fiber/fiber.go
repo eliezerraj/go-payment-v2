@@ -5,11 +5,11 @@ import (
 	"context"
 	
 	"go.uber.org/zap"
-
-	"github.com/gofiber/fiber/v2"
 	"github.com/json-iterator/go"
 
-	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/contrib/v3/prometheus"
+	"github.com/gofiber/fiber/v3/middleware/compress"
 
 	"github.com/go-payment-v2/cmd/webserver/framework/fiber/adapter"
 	"github.com/go-payment-v2/application/config"
@@ -27,13 +27,12 @@ type FiberServerConfig struct {
 }
 
 func NewServerConfig(cfg *config.HTTP) FiberServerConfig {
-	logger.InfoOutCtx("initializing fiber server config SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing fiber server config SUCCESSFULLY")
 
 	return FiberServerConfig{
 		Config: fiber.Config{
 			JSONEncoder:           jsoniter.Marshal,
 			JSONDecoder:           jsoniter.Unmarshal,
-			DisableStartupMessage: cfg.DisableStartupMessage,
 			ReadBufferSize:        cfg.ReadBufferSize,
 			ReadTimeout:           cfg.ReadTimeout,
 			WriteTimeout:          cfg.WriteTimeout,
@@ -51,7 +50,7 @@ type httpAdapter struct {
 
 // Create a new httpAdapter with the provided configuration and application.
 func newAdapters(cfg *config.Config, application *application.Application) *httpAdapter {
-	logger.InfoOutCtx("initializing fiber adapters SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing fiber adapters SUCCESSFULLY")
 
 	return &httpAdapter{
 		metadataAdp:   	adapter.NewMetadataAdapter(cfg),
@@ -67,7 +66,7 @@ type FiberServer struct {
 }
 
 func NewFiberServer(cfg *config.Config) *FiberServer {
-	logger.InfoOutCtx("initializing fiber server SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing fiber server SUCCESSFULLY")
 
 	// Create Fiber server configuration
 	fiberConfig := NewServerConfig(&cfg.HTTP)
@@ -84,12 +83,16 @@ func NewFiberServer(cfg *config.Config) *FiberServer {
 }
 
 func setupMiddleware(cfg *config.Config, fiberApp *fiber.App) {
-	logger.InfoOutCtx("setting up middleware for fiber server")
+	logger.Info(context.Background(), "setting up middleware for fiber server")
 	
 	fiberApp.Use(middleware.HeaderMiddleware())
 	fiberApp.Use(middleware.RequestIDMiddleware())
 	fiberApp.Use(middleware.TraceExtractionMiddleware())
-	
+	fiberApp.Use(prometheus.New(prometheus.Config{
+								ServiceName: cfg.App.Name,
+								MetricsPath: "/metrics",
+								}))
+									
 	fiberApp.Use(compress.New(compress.Config{
 		Level: compress.LevelBestSpeed,
 	}))
@@ -97,7 +100,7 @@ func setupMiddleware(cfg *config.Config, fiberApp *fiber.App) {
 
 // SetupRoutes sets up the routes for the Fiber server using the provided application instance.
 func (s *FiberServer) SetupRoutes(cfg *config.Config, application *application.Application) {
-	logger.InfoOutCtx("setting up routes for fiber server SUCCESSFULLY")
+	logger.Info(context.Background(), "setting up routes for fiber server SUCCESSFULLY")
 
 	root := s.FiberApp.Group("/")
 
@@ -110,7 +113,7 @@ func (s *FiberServer) SetupRoutes(cfg *config.Config, application *application.A
 	// Retrieve the JWKS URL from the auth service
 	err := authService.GetJwksUrl(context.Background())
 	if err != nil {
-		logger.WarnOutCtx("Failed to get JWKS URL", zap.Error(err))
+		logger.Warn(context.Background(), "Failed to get JWKS URL", zap.Error(err))
 	}
 
 	// Create adapters for controllers						

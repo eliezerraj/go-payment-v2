@@ -71,7 +71,7 @@ func NewResponseError(	ctx context.Context,
 	var errResp *Error
 
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		logger.ErrorOutCtx("context timeout", zap.Any("stack_trace", err))
+		logger.Error(ctx, "context timeout", zap.Any("stack_trace", err))
 		
 		return &Error{
 			OriginalError: err,

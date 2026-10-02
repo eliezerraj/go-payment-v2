@@ -21,7 +21,7 @@ type PaymentController struct {
 }
 
 func NewPaymentController(paymentUseCase usecase.IPaymentUseCase) *PaymentController {
-	logger.InfoOutCtx("initializing payment controller SUCCESSFULLY")
+	logger.Info(context.Background(), "initializing payment controller SUCCESSFULLY")
 
 	schema := validator.Schema{
 		Validate: func(ctx context.Context, data any) error {

@@ -32,7 +32,7 @@ const (
 )
 
 func NewOrderModule(cfg *config.Config, client	httpclient.IHTTPClient) OrderModule {
-	logger.InfoOutCtx("NewOrderModule called")
+	logger.Info(context.Background(), "NewOrderModule called")
 
 	return OrderModule{
 		cfg: cfg,

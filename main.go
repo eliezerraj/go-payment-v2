@@ -29,10 +29,13 @@ func setupLogging(cfg *config.Config) {
 		cfg.Log.Level,
 		cfg.Log.Mode,
 	).WithHook(func(ctx context.Context) []zap.Field {
+		zapFields := []zap.Field{}
+		zapFields = append(zapFields, zap.String("app_name", cfg.App.Name))
+
 		if id, ok := ctx.Value(RequestIDHeaderName).(string); ok && id != "" {
-			return []zap.Field{zap.String("x-request-id", id)}
+			zapFields = append(zapFields, zap.String("x-request-id", id))
 		}
-		return nil
+		return zapFields
 	})
 }
 
@@ -92,9 +95,9 @@ func setupMetrics(cfg *config.Config) {
     mux.Handle("/metrics", promhttp.Handler())
 
     go func() {
-		logger.InfoOutCtx("starting metrics server", zap.String("port", cfg.OtelEnv.OtelMetricsPort))
+		logger.Info(context.Background(), "starting metrics server", zap.String("port", cfg.OtelEnv.OtelMetricsPort))
         if err := http.ListenAndServe(":"+cfg.OtelEnv.OtelMetricsPort, mux); err != nil {
-            logger.ErrorOutCtx("metrics server error", zap.Error(err))
+            logger.Error(context.Background(), "metrics server error", zap.Error(err))
         }
     }()
 }
@@ -111,11 +114,8 @@ func main() {
 	setupLogging(cfg)
 	defer logger.Close()
 
-	logger.InfoOutCtx("starting application", 
-		zap.String("app_name", cfg.App.Name), 
-		zap.String("version", cfg.App.Version))
-
-	logger.InfoOutCtx("application configuration", zap.Any("config", cfg))
+	logger.Info(context.Background(), "starting application")
+	logger.Info(context.Background(), "application configuration", zap.Any("config", cfg))
 
 	// Setup observability and metrics
 	setupObservability(cfg)
@@ -128,9 +128,9 @@ func main() {
 	// Define the process type webserver or worker.
 	switch cfg.App.Type {
 	case "worker":
-		logger.InfoOutCtx("worker process NOT implemented")
+		logger.Info(context.Background(), "worker process NOT implemented")
 	case "webserver":
-		logger.InfoOutCtx("starting webserver process")
+		logger.Info(context.Background(), "starting webserver process")
 		
 		webServer := webserver.NewWebServer(cfg)
 		go webServer.Run()

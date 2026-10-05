@@ -107,7 +107,7 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 	// Add the payment to the repository
 	res_payment, err = o.paymentRepository.PaymentAdd(ctx, tx, payment)
 	if err != nil {
-		logger.Error(ctx, "payment usecase PaymentAdd failed", zap.Error(err))
+		logger.Debug(ctx, "payment usecase PaymentAdd failed", zap.Error(err))
 		return nil, err
 	}
 
@@ -134,7 +134,7 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 
 		res_payment_detail, err := o.paymentRepository.PaymentCardAdd(ctx, tx, payment)
 		if err != nil {
-			logger.Error(ctx, "payment usecase PaymentAdd failed to add payment card", zap.Error(err))
+			logger.Debug(ctx, "payment usecase PaymentAdd failed to add payment card", zap.Error(err))
 			return nil, err
 		}
 		payment.PaymentDetail[i].ID = res_payment_detail.ID
@@ -155,7 +155,7 @@ func (o *PaymentUsecase) PaymentGet(ctx context.Context, payment entity.Payment)
 	// Get the payment from the repository
 	res_payment, err := o.paymentRepository.PaymentGet(ctx, payment)
 	if err != nil {
-		logger.Error(ctx, "payment usecase PaymentGet failed", zap.Error(err))
+		logger.Debug(ctx, "payment usecase PaymentGet failed", zap.Error(err))
 		return nil, err
 	}
 
@@ -165,7 +165,7 @@ func (o *PaymentUsecase) PaymentGet(ctx context.Context, payment entity.Payment)
 	// Get the payment card details from the repository
 	res_payment_detail, err := o.paymentRepository.PaymentCardGet(ctx, payment)
 	if err != nil {
-		logger.Error(ctx, "payment usecase PaymentGet failed to get payment card", zap.Error(err))
+		logger.Debug(ctx, "payment usecase PaymentGet failed to get payment card", zap.Error(err))
 		return nil, err
 	}
 
@@ -186,7 +186,7 @@ func (o *PaymentUsecase) PaymentListByOrderID(ctx context.Context, order entity.
 	// Get the payment list from the repository
 	payments, err := o.paymentRepository.PaymentListByOrderID(ctx, order)
 	if err != nil {
-		logger.Error(ctx, "payment usecase PaymentListByOrderID failed", zap.Error(err))
+		logger.Debug(ctx, "payment usecase PaymentListByOrderID failed", zap.Error(err))
 		return nil, err
 	}
 
@@ -248,7 +248,7 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 	// Call the next use case in the chain
 	res_payment, err := d.next.PaymentAdd(ctx, payment)
 	if err != nil {
-		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to add payment", zap.Error(err))
+		logger.Debug(ctx, "PaymentUsecaseEventDecorator: failed to add payment", zap.Error(err))
 		return nil, err
 	}
 
@@ -291,8 +291,7 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 	kafkaHeaders.Set("x-request-id", xrequestid)
 	err = d.producerWorker.ProduceMessage(ctx, topic, key, kafkaHeaders, payload_bytes)
 	if err != nil {
-		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to produce message", zap.Error(err))
-
+		logger.Debug(ctx, "PaymentUsecaseEventDecorator: failed to produce message", zap.Error(err))
 		return nil, err
 	}
 

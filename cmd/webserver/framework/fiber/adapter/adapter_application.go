@@ -3,6 +3,7 @@ package adapter
 import (
 	"context"
 	"strconv"
+	"errors"
 
 	"go.uber.org/zap"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/go-payment-v2/application/config"
 	"github.com/go-payment-v2/application/infrastructure/application"
 	"github.com/go-payment-v2/application/domain/external"
+	"github.com/go-payment-v2/application/domain/apperrors"
 
 	"github.com/eliezerraj/go-core/v3/logger"
 	"github.com/eliezerraj/go-core/v3/http/utils"
@@ -64,11 +66,24 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber fiber.Ctx) error {
 
 	res, err := a.application.PaymentController.PaymentGet(ctx, payment)
 	if err != nil {
-		logger.Error(ctx, "failed to get payment ", zap.Error(err))
+
+		var statusCode int
+		var statusCodeMessage string
+		
+		if errors.Is(err, apperrors.ErrNotFound) {
+			logger.Warn(ctx, "payment not found", zap.Error(err))
+			statusCode = fiber.StatusNotFound
+			statusCodeMessage = fiber.ErrNotFound.Message
+		} else {
+			logger.Error(ctx, "failed to get payment ", zap.Error(err))
+			statusCode = fiber.StatusInternalServerError
+			statusCodeMessage = fiber.ErrInternalServerError.Message
+		}
+
 		errorResponse := external.NewResponseError(ctx,
-			fiber.StatusNotFound,
-			fiber.ErrNotFound,
-			fiber.ErrNotFound.Message,
+			statusCode,
+			fiber.NewError(statusCode, statusCodeMessage),
+			statusCodeMessage,
 			"failed to get payment",
 			err.Error(),
 			external.BUSSINESS_ERROR)
@@ -118,11 +133,24 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber fiber.Ctx) error {
 
 	res, err := a.application.PaymentController.PaymentAdd(ctx, payment)
 	if err != nil {
-		logger.Error(ctx, "failed to add payment", zap.Error(err))
+
+		var statusCode int
+		var statusCodeMessage string
+		
+		if errors.Is(err, apperrors.ErrNotFound) {
+			logger.Warn(ctx, "payment not found", zap.Error(err))
+			statusCode = fiber.StatusNotFound
+			statusCodeMessage = fiber.ErrNotFound.Message
+		} else {
+			logger.Error(ctx, "failed to get payment ", zap.Error(err))
+			statusCode = fiber.StatusInternalServerError
+			statusCodeMessage = fiber.ErrInternalServerError.Message
+		}
+		
 		errorResponse := external.NewResponseError(ctx,
-			fiber.StatusInternalServerError,
-			fiber.ErrInternalServerError,
-			fiber.ErrInternalServerError.Message,
+			statusCode,
+			fiber.NewError(statusCode, statusCodeMessage),
+			statusCodeMessage,
 			"failed to add payment",
 			err.Error(),
 			external.BUSSINESS_ERROR)
@@ -175,11 +203,25 @@ func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber fiber.Ctx) error {
 
 	res, err := a.application.PaymentController.PaymentListByOrderID(ctx, paymentRequest)
 	if err != nil {
+
+				var statusCode int
+		var statusCodeMessage string
+		
+		if errors.Is(err, apperrors.ErrNotFound) {
+			logger.Warn(ctx, "payment not found", zap.Error(err))
+			statusCode = fiber.StatusNotFound
+			statusCodeMessage = fiber.ErrNotFound.Message
+		} else {
+			logger.Error(ctx, "failed to list payments by order ID ", zap.Error(err))
+			statusCode = fiber.StatusInternalServerError
+			statusCodeMessage = fiber.ErrInternalServerError.Message
+		}
+
 		logger.Error(ctx, "failed to list payments by order ID", zap.Error(err))
 		errorResponse := external.NewResponseError(ctx,
-			fiber.StatusInternalServerError,
-			fiber.ErrInternalServerError,
-			fiber.ErrInternalServerError.Message,
+			statusCode,
+			fiber.NewError(statusCode, statusCodeMessage),
+			statusCodeMessage,
 			"failed to list payments by order ID",
 			err.Error(),
 			external.BUSSINESS_ERROR)

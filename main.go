@@ -54,7 +54,6 @@ func setupObservability(cfg *config.Config){
 
 	otelEnvTrace := &tracing.EnvTrace{
 		OtelExportEndpoint:      cfg.OtelEnv.OtelExportEndpoint,
-		UseStdoutTracerExporter: cfg.OtelEnv.UseStdoutTracerExporter,
 		UseOtlpCollector:        cfg.OtelEnv.UseOtlpCollector,
 		TimeInterval:            1,
 		TimeAliveIncrementer:    1,

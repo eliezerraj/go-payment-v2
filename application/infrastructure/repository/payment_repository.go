@@ -1,15 +1,16 @@
 package repository
 
 import (
+	"fmt"
 	"time"
 	"context"
-	"errors"
 	"go.uber.org/zap"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/go-payment-v2/application/domain/entity"
 	"github.com/go-payment-v2/application/tracing"
+	"github.com/go-payment-v2/application/domain/apperrors"
 	
 	"github.com/eliezerraj/go-core/v3/logger"
 	"github.com/eliezerraj/go-core/v3/database/connector"
@@ -76,7 +77,7 @@ func (p *PaymentRepository) PaymentGet(ctx context.Context, payment entity.Payme
 		if err != nil {
 			span.RecordError(err) 
 			span.SetStatus(codes.Error, err.Error())
-			logger.Error(ctx, "payment repository PaymentGet failed", zap.Error(err))
+			logger.Debug(ctx, "payment repository PaymentGet failed", zap.Error(err))
 		}
         histogram.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(
             attribute.String("operation", "PaymentGet"),
@@ -110,8 +111,7 @@ func (p *PaymentRepository) PaymentGet(ctx context.Context, payment entity.Payme
 		}
 	} else {
 		logger.Warn(ctx, "not found", zap.Int("payment_id", payment.ID))
-		err = errors.New("payment not found")
-		return nil, err
+		return nil, fmt.Errorf("payment: %s: %w", payment.PaymentNumber, apperrors.ErrNotFound)
 	}
 
 	return &payment, nil
@@ -139,7 +139,7 @@ func (p *PaymentRepository) PaymentAdd(ctx context.Context, tx pgx.Tx, payment e
 		if err != nil {
 			span.RecordError(err) 
 			span.SetStatus(codes.Error, err.Error())
-			logger.Error(ctx, "payment repository PaymentAdd failed", zap.Error(err))
+			logger.Debug(ctx, "payment repository PaymentAdd failed", zap.Error(err))
 		}
 		histogram.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(
 			attribute.String("operation", "PaymentAdd"),
@@ -186,7 +186,7 @@ func (p *PaymentRepository) PaymentCardAdd(ctx context.Context, tx pgx.Tx, payme
 		if err != nil {
 			span.RecordError(err) 
 			span.SetStatus(codes.Error, err.Error())
-			logger.Error(ctx, "payment repository PaymentCardAdd failed", zap.Error(err))
+			logger.Debug(ctx, "payment repository PaymentCardAdd failed", zap.Error(err))
 		}
 		histogram.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(
 			attribute.String("operation", "PaymentCardAdd"),
@@ -236,7 +236,7 @@ func (p *PaymentRepository) PaymentCardGet(ctx context.Context, payment entity.P
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			logger.Error(ctx, "payment repository PaymentCardGet failed", zap.Error(err))
+			logger.Debug(ctx, "payment repository PaymentCardGet failed", zap.Error(err))
 		}
 		histogram.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(
 			attribute.String("operation", "PaymentCardGet"),
@@ -277,9 +277,7 @@ func (p *PaymentRepository) PaymentCardGet(ctx context.Context, payment entity.P
 	}
 
 	if len(paymentDetails) == 0 {
-		logger.Warn(ctx, "not found", zap.Int("payment_id", payment.ID))
-		err = errors.New("payment card not found")
-		return nil, err
+		return nil, fmt.Errorf("payment card: %d: %w", payment.ID, apperrors.ErrNotFound)
 	}
 
 	return paymentDetails, nil
@@ -306,7 +304,7 @@ func (p *PaymentRepository) PaymentListByOrderID(ctx context.Context, order enti
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			logger.Error(ctx, "payment repository PaymentListByOrderID failed", zap.Error(err))
+			logger.Debug(ctx, "payment repository PaymentListByOrderID failed", zap.Error(err))
 		}
 		histogram.Record(ctx, time.Since(start).Seconds(), metric.WithAttributes(
 			attribute.String("operation", "PaymentListByOrderID"),

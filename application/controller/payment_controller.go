@@ -85,7 +85,7 @@ func (p *PaymentController) PaymentAdd(ctx context.Context, req external.Payment
 	// Call the use case to add the order
 	res, err := p.paymentUseCase.PaymentAdd(ctx, payment)
 	if err != nil {
-		logger.Error(ctx, "payment controller PaymentAdd failed", zap.Error(err))
+		logger.Debug(ctx, "payment controller PaymentAdd failed", zap.Error(err))
 		return nil, err
 	}
 
@@ -107,7 +107,7 @@ func (p *PaymentController) PaymentGet(ctx context.Context, req external.Payment
 	// Call the use case to get the order
 	res, err := p.paymentUseCase.PaymentGet(ctx, payment)
 	if err != nil {
-		logger.Error(ctx, "payment controller PaymentGet failed", zap.Error(err))
+		logger.Debug(ctx, "payment controller PaymentGet failed", zap.Error(err))
 		return nil, err
 	}
 
@@ -129,7 +129,7 @@ func (p *PaymentController) PaymentListByOrderID(ctx context.Context, req extern
 	// Call the use case to get the payment list by order ID
 	res, err := p.paymentUseCase.PaymentListByOrderID(ctx, order)
 	if err != nil {
-		logger.Error(ctx, "payment controller PaymentListByOrderID failed", zap.Error(err))
+		logger.Debug(ctx, "payment controller PaymentListByOrderID failed", zap.Error(err))
 		return nil, err
 	}
 

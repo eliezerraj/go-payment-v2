@@ -12,8 +12,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 h1:5RVFMOWjMyRy8cARdy79nAmgYw3hK/4HUq48LQ6Wwqo=
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1/go.mod h1:ZXNYxsqcloTdSy/rNShjYzMhyjf0LaoftYK0p+A3h40=
-github.com/eliezerraj/go-core/v3 v3.0.0-20261001220818-e557010c7ad6 h1:n7ndeIXh5Fnaqq2GSxnhf/hv7EpDCeFqtZsmrHoU+vY=
-github.com/eliezerraj/go-core/v3 v3.0.0-20261001220818-e557010c7ad6/go.mod h1:GUfqf1kB4N4IV0ziy+4hq2pEP3FHJ8ES7IJk20338XM=
+github.com/eliezerraj/go-core/v3 v3.0.0-20261015165848-6855db2dd0e3 h1:O1TdzY9kT6py+f0j6H52KA/z5y8ExQNJdCo/kCInxFM=
+github.com/eliezerraj/go-core/v3 v3.0.0-20261015165848-6855db2dd0e3/go.mod h1:GUfqf1kB4N4IV0ziy+4hq2pEP3FHJ8ES7IJk20338XM=
 github.com/felixge/httpsnoop v1.1.0 h1:3YtUj32ZZkqZtt3sZZsClsymw/QDuVfpNhoA31zeORc=
 github.com/felixge/httpsnoop v1.1.0/go.mod h1:Zqxgdd+1Rkcz8euOqdr7lqgCRJztwr5hp9vDSi5UZCE=
 github.com/fxamacker/cbor/v2 v2.9.4 h1:xwjVlxEMR3S605oUlgBjKLTTeGFciYPGYCtF/35LKGo=

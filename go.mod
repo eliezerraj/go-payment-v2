@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/confluentinc/confluent-kafka-go/v2 v2.15.1
-	github.com/eliezerraj/go-core/v3 v3.0.0-20261001220818-e557010c7ad6
+	github.com/eliezerraj/go-core/v3 v3.0.0-20261015165848-6855db2dd0e3
 	github.com/gofiber/contrib/v3/prometheus v0.0.5
 	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/gofiber/fiber/v3 v3.5.0

@@ -19,6 +19,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type ApplicationAdapter struct {
@@ -87,6 +88,9 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber fiber.Ctx) error {
 			"failed to get payment",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", statusCode),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
@@ -94,7 +98,9 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber fiber.Ctx) error {
 		Response: "Payment retrieved successfully",
 		Payment: res,
 	}
-
+	span.SetAttributes(
+		attribute.Int("http.response.status_code", fiber.StatusOK),
+	)
 	return ctxFiber.Status(fiber.StatusOK).JSON(resp)
 }
 
@@ -128,6 +134,9 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber fiber.Ctx) error {
 			"failed to parse request body",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", fiber.StatusBadRequest),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
@@ -154,6 +163,9 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber fiber.Ctx) error {
 			"failed to add payment",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", statusCode),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
@@ -161,7 +173,9 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber fiber.Ctx) error {
 		Response: "Payment added successfully",
 		Payment: res,
 	}
-
+	span.SetAttributes(
+			attribute.Int("http.response.status_code", fiber.StatusCreated),
+	)
 	return ctxFiber.Status(fiber.StatusCreated).JSON(resp)
 }
 
@@ -225,6 +239,9 @@ func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber fiber.Ctx) error {
 			"failed to list payments by order ID",
 			err.Error(),
 			external.BUSSINESS_ERROR)
+		span.SetAttributes(
+				attribute.Int("http.response.status_code", statusCode),
+		)
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
@@ -232,6 +249,8 @@ func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber fiber.Ctx) error {
 		Response: "Payments retrieved successfully",
 		Payment: res,
 	}
-
+	span.SetAttributes(
+			attribute.Int("http.response.status_code", fiber.StatusOK),
+	)
 	return ctxFiber.Status(fiber.StatusOK).JSON(resp)
 }

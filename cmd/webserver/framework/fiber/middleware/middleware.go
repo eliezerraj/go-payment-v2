@@ -18,21 +18,6 @@ import (
 
 const RequestIDHeaderName = "x-request-id"
 
-// AuthorizationMiddleware is a middleware function that checks for the presence of an Authorization header in the request. If the header is missing, it returns a 401 Unauthorized response.
-func AuthorizationMiddleware() fiber.Handler {
-	return func(c fiber.Ctx) error {
-		c.Accepts("application/json")
-
-		authHeader := c.Get("Authorization")
-		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Authorization header is required",
-			})
-		}
-		return c.Next()
-	}
-}
-
 // HeaderMiddleware is a middleware function that sets security and CORS headers for the response.
 func HeaderMiddleware() fiber.Handler {
 	return func(c fiber.Ctx) error {
@@ -132,4 +117,22 @@ func TraceExtractionMiddleware() fiber.Handler {
 
 		return c.Next()
 	}
+}
+
+// TraceMiddleware is a middleware function that starts a new trace span for each incoming request, allowing for distributed tracing across services.
+func TraceMiddleware() fiber.Handler {
+    return func(c fiber.Ctx) error {
+
+		switch c.Path() {
+			case "/metrics", "/health":
+				return c.Next()
+        }
+
+        ctx, span := otel.Tracer("http").Start(context.Background(), c.Method() + " " + c.Path())
+        defer span.End()
+
+        c.SetContext(ctx)
+
+        return c.Next()
+    }
 }

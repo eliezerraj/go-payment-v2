@@ -85,6 +85,7 @@ func NewFiberServer(cfg *config.Config) *FiberServer {
 func setupMiddleware(cfg *config.Config, fiberApp *fiber.App) {
 	logger.Info(context.Background(), "setting up middleware for fiber server")
 	
+	fiberApp.Use(middleware.TraceMiddleware())	
 	fiberApp.Use(middleware.HeaderMiddleware())
 	fiberApp.Use(middleware.RequestIDMiddleware())
 	fiberApp.Use(middleware.TraceExtractionMiddleware())

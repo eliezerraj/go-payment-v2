@@ -238,12 +238,12 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentUsecaseEventDecorator.PaymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
-	if !d.enabled {
-		logger.Info(ctx, "PaymentUsecaseEventDecorator is disabled, proceeding without event publishing")
+	if d.enabled {
+		logger.Info(ctx, "PaymentUsecaseEventDecorator DRY RUN mode is enabled, proceeding without event publishing")
 		return d.next.PaymentAdd(ctx, payment)
 	}
 
-	logger.Info(ctx, "PaymentUsecaseEventDecorator is enabled, proceeding with event publishing")
+	logger.Info(ctx, "PaymentUsecaseEventDecorator DRY RUN mode is disabled, proceeding with event publishing")
 
 	// Call the next use case in the chain
 	res_payment, err := d.next.PaymentAdd(ctx, payment)

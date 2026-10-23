@@ -43,7 +43,7 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber fiber.Ctx) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.paymentGet", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -111,7 +111,7 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber fiber.Ctx) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.paymentAdd", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -185,7 +185,7 @@ func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber fiber.Ctx) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "applicationAdapter.PaymentListByOrderID", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentListByOrderID", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(

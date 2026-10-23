@@ -46,7 +46,7 @@ func (im *OrderModule) OrderPut(ctx context.Context, order entity.Order) (*entit
 	ctxHttpTimeout, cancel := context.WithTimeout(ctx, im.cfg.Inventory.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxHttpTimeout, "orderModule.OrderPut", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctxHttpTimeout, "module.order.orderPut", trace.SpanKindInternal)
 	defer span.End()
 
 	var endpoint string

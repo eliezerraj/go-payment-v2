@@ -40,7 +40,7 @@ func (p *PaymentController) PaymentAdd(ctx context.Context, req external.Payment
 	logger.Info(ctx, "payment controller PaymentAdd called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentController.PaymentAdd", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
 	// Schema validation
@@ -97,7 +97,7 @@ func (p *PaymentController) PaymentGet(ctx context.Context, req external.Payment
 	logger.Info(ctx, "payment controller PaymentGet called", zap.String("payment_number", req.PaymentNumber))
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentController.PaymentGet", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
 	payment := entity.Payment{
@@ -118,7 +118,7 @@ func (p *PaymentController) PaymentListByOrderID(ctx context.Context, req extern
 	logger.Info(ctx, "payment controller PaymentListByOrderID called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentController.PaymentListByOrderID", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.paymentListByOrderID", trace.SpanKindInternal)
 	defer span.End()
 
 	order := entity.Order{

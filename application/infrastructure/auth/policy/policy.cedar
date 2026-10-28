@@ -17,12 +17,34 @@ when {
 
 permit(
     principal,
+    action == Action::"get:payment",
+    resource
+)
+when {
+    principal.roles.contains(
+        "order-all-role"
+    )
+};
+
+permit(
+    principal,
     action == Action::"add:payment",
     resource
 )
 when {
     principal.scopes.contains(
         "payment:create"
+    )
+};
+
+permit(
+    principal,
+    action == Action::"add:payment",
+    resource
+)
+when {
+    principal.roles.contains(
+        "order-all-role"
     )
 };
 
@@ -37,3 +59,13 @@ when {
     )
 };
 
+permit(
+    principal,
+    action == Action::"list:payment",
+    resource
+)
+when {
+    principal.roles.contains(
+        "order-all-role"
+    )
+};

@@ -132,12 +132,6 @@ paths:
                           HealthCheckTimeout:
                             type: integer
                             example: 15000000000
-                      Scopes:
-                        type: object
-                        properties:
-                          AllowedScopes:
-                            type: string
-                            example: workload01:db-01,workload01:db-02
                       Log:
                         type: object
                         properties:

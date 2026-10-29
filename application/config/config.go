@@ -32,7 +32,6 @@ type Database struct {
 	Password              string        `env:"DB_PASSWORD,required,notEmpty"`
 	Name                  string        `env:"DB_NAME,required,notEmpty"`
 	Schema                string        `env:"DB_SCHEMA" envDefault:"postgres"`
-	QueryTracer           bool          `env:"DATABASE_QUERY_TRACER" envDefault:"false"`
 	MaxConnections        int32         `env:"DB_MAX_CONNS" envDefault:"5"`
 	MinConnections        int32         `env:"DB_MIN_CONNS" envDefault:"5"`
 	ConnTimeout           time.Duration `env:"DB_CONNECTION_TIMEOUT_DURATION" envDefault:"5s"`
@@ -42,11 +41,8 @@ type Database struct {
 	HealthCheckTimeout    time.Duration `env:"DB_HEALTH_CHECK_TIMEOUT" envDefault:"15s"`
 }
 
-type Scopes struct {
-	AllowedScopes string `env:"ALLOWEDSCOPES"`
-}
-
 type Authorization struct {
+	PolicyPath          string `env:"AUTHORIZATION_POLICY_PATH"`
 	HeaderKey 			string `env:"AUTHORIZATION_HEADER_KEY,required"`
 	DryRun  			bool   `env:"AUTHORIZATION_DRY_RUN,required"`
 	JwksURL 			string `env:"AUTHORIZATION_JWKS_URL"`
@@ -71,7 +67,6 @@ type Config struct {
 	App         App
 	HTTP        HTTP
 	Database    Database
-	Scopes		Scopes
 	Log         Log
 	OtelEnv		OtelEnv
 	Authorization Authorization

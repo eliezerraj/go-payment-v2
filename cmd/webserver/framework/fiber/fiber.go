@@ -18,6 +18,7 @@ import (
 
 	"github.com/eliezerraj/go-core/v3/logger"
 	"github.com/eliezerraj/go-core/v3/auth"
+	"github.com/eliezerraj/go-core/v3/policy"
 )
 
 // Create a new Server configuration.
@@ -117,6 +118,11 @@ func (s *FiberServer) SetupRoutes(cfg *config.Config, application *application.A
 		logger.Warn(context.Background(), "Failed to get JWKS URL", zap.Error(err))
 	}
 
+	clientCedar, err := policy.NewCedarClient(cfg.Authorization.PolicyPath, cfg.Authorization.DryRun)
+	if err != nil {
+		logger.Warn(context.Background(), "Failed to create Cedar client", zap.Error(err))
+	}
+
 	// Create adapters for controllers						
 	adapters := newAdapters(s.cfg, application)
 	root.Get("/health", adapters.metadataAdp.HealthGet)
@@ -128,13 +134,16 @@ func (s *FiberServer) SetupRoutes(cfg *config.Config, application *application.A
 
 	appRoutes.Get("/payment/:payment_number", 
 					authService.FiberAuthorizationMiddleware(),
+					clientCedar.FiberPolicyEvaluationMiddleware("get:payment"),
 					middleware.MetricsMiddleware(adapters.applicationAdp.PaymentGet))
 	
 	appRoutes.Post("/payment", 
 					authService.FiberAuthorizationMiddleware(),
+					clientCedar.FiberPolicyEvaluationMiddleware("add:payment"),
 					middleware.MetricsMiddleware(adapters.applicationAdp.PaymentAdd))
 	
 	appRoutes.Get("/payment/order/:order_id", 
 					authService.FiberAuthorizationMiddleware(),
+					clientCedar.FiberPolicyEvaluationMiddleware("list:payment"),
 					middleware.MetricsMiddleware(adapters.applicationAdp.PaymentListByOrderID))
 }

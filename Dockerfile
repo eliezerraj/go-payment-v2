@@ -16,6 +16,7 @@ FROM alpine
 
 WORKDIR /app
 COPY --from=builder /app/go-payment-v2 .
+COPY --from=builder /app/application/infrastructure/auth/policy/policy.cedar /app/application/infrastructure/auth/policy/policy.cedar
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 CMD ["/app/go-payment-v2"]

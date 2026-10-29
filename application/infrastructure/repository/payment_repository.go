@@ -60,7 +60,7 @@ func (p *PaymentRepository) PaymentGet(ctx context.Context, payment entity.Payme
 	logger.Info(ctx, "payment repository PaymentGet called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentGet", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
     meter := otel.Meter("go-payment-v2.repository")
@@ -122,7 +122,7 @@ func (p *PaymentRepository) PaymentAdd(ctx context.Context, tx pgx.Tx, payment e
 	logger.Info(ctx, "payment repository PaymentAdd called" , zap.Any("payment", payment))
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentAdd", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 	
 	meter := otel.Meter("go-payment-v2.repository")
@@ -169,7 +169,7 @@ func (p *PaymentRepository) PaymentCardAdd(ctx context.Context, tx pgx.Tx, payme
 	logger.Info(ctx, "payment repository PaymentCardAdd called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentCardAdd", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentCardAdd", trace.SpanKindInternal)
 	defer span.End()
 	
 	meter := otel.Meter("go-payment-v2.repository")
@@ -219,7 +219,7 @@ func (p *PaymentRepository) PaymentCardGet(ctx context.Context, payment entity.P
 	logger.Info(ctx, "payment repository PaymentCardGet called", zap.Any("payment", payment))
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentCardGet", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentCardGet", trace.SpanKindInternal)
 	defer span.End()
 
 	meter := otel.Meter("go-payment-v2.repository")
@@ -287,7 +287,7 @@ func (p *PaymentRepository) PaymentListByOrderID(ctx context.Context, order enti
 	logger.Info(ctx, "payment repository PaymentListByOrderID called", zap.Any("order", order))
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "paymentRepository.PaymentListByOrderID", trace.SpanKindInternal)
+	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentListByOrderID", trace.SpanKindInternal)
 	defer span.End()
 
 	meter := otel.Meter("go-payment-v2.repository")

@@ -65,7 +65,7 @@ jobs:
       - id: repo_name
         run: echo "REPO_NAME=$(basename ${{ github.repository }})" >> "$GITHUB_OUTPUT"
       - id: main_go_file
-        run: echo "MAIN_GO_FILE=cmd/main.go" >> "$GITHUB_OUTPUT"
+        run: echo "MAIN_GO_FILE=main.go" >> "$GITHUB_OUTPUT"
       - id: cloudformation_template_path
         run: echo "CLOUDFORMATION_TEMPLATE_PATH=assets/cloudformation/template/ecr-pod-identity.yaml" >> "$GITHUB_OUTPUT"
       - id: image_tag

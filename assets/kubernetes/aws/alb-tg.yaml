@@ -1,0 +1,25 @@
+apiVersion: gateway.k8s.aws/v1beta1
+kind: TargetGroupConfiguration
+metadata:
+  name: tg-go-inventory-v2
+  namespace: test-a
+  labels:
+    app: tg-go-inventory-v2
+spec:
+  targetReference:  
+    name: svc-go-inventory-v2
+  defaultConfiguration:
+    targetGroupName: tg-go-inventory-v2
+    targetType: ip
+  routeConfigurations:
+    - routeIdentifier:
+        kind: HTTPRoute
+        name: go-inventory-v2-route
+        namespace: test-a
+      targetGroupProps:
+        healthCheckConfig:
+          healthCheckProtocol: HTTP
+          healthCheckPath: /health
+          healthCheckPort: traffic-port 
+          healthyThresholdCount: 2 
+          unhealthyThresholdCount: 2

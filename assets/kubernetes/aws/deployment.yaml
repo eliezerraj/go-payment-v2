@@ -55,10 +55,10 @@ spec:
             - ALL
         ports:
         - name: http
-          containerPort: 7000
+          containerPort: 7003
           protocol: TCP
         - name: metrics
-          containerPort: 8000
+          containerPort: 8003
           protocol: TCP
         readinessProbe:
             httpGet:

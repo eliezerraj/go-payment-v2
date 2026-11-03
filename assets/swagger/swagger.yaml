@@ -281,7 +281,7 @@ paths:
                           items:
                             type: object
                             properties:
-                              payment_detail_date:
+                              payment__date:
                                 type: string
                                 format: date-time
                                 example: '0001-01-01T00:00:00Z'
@@ -549,7 +549,7 @@ paths:
                             id:
                               type: integer
                               example: 33
-                            payment_detail_date:
+                            payment_date:
                               type: string
                               format: date-time
                               example: '2026-09-06T17:24:22.695482-03:00'
@@ -866,7 +866,7 @@ paths:
                             id:
                               type: integer
                               example: 42
-                            payment_detail_date:
+                            payment_date:
                               type: string
                               format: date-time
                               example: '2026-09-13T02:26:54.812415732Z'

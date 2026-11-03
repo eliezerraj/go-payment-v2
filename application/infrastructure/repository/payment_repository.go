@@ -320,7 +320,8 @@ func (p *PaymentRepository) PaymentListByOrderID(ctx context.Context, order enti
 					pd.currency,
 					pd.amount,
 					pd.created_at,
-					c.holder 
+					c.holder,
+					pd.payment_date 
 			from payment p,
 				payment_detail pd,
 				card c
@@ -335,23 +336,22 @@ func (p *PaymentRepository) PaymentListByOrderID(ctx context.Context, order enti
 	}
 	defer rows.Close()
 
-	var payments []*entity.Payment	
-	for rows.Next() {
-		payment := &entity.Payment{}
-		paymentDetails := []*entity.PaymentDetail{}
-		paymentDetail := entity.PaymentDetail{
-			CreditCard: &entity.CreditCard{},
-		}
-		err = rows.Scan(&payment.ID, &payment.TransactionID, &payment.PaymentNumber, &payment.Type, &payment.CreatedAt, &paymentDetail.CreditCard.Pan, &paymentDetail.Currency, &paymentDetail.Amount, &paymentDetail.CreatedAt, &paymentDetail.CreditCard.Holder)
-		if err != nil {
-			return nil, err
-		}
-		paymentDetails = append(paymentDetails, &paymentDetail)
-		payment.PaymentDetail = paymentDetails
-		payment.Order = order
-		res_payments = append(res_payments, payment)
-		payments = append(payments, payment)
-	}
+    res_payments = make([]*entity.Payment, 0)
+    for rows.Next() {
+        payment := &entity.Payment{}
+        paymentDetails := []*entity.PaymentDetail{}
+        paymentDetail := entity.PaymentDetail{
+            CreditCard: &entity.CreditCard{},
+        }
+        err = rows.Scan(&payment.ID, &payment.TransactionID, &payment.PaymentNumber, &payment.Type, &payment.CreatedAt, &paymentDetail.CreditCard.Pan, &paymentDetail.Currency, &paymentDetail.Amount, &paymentDetail.CreatedAt, &paymentDetail.CreditCard.Holder, &paymentDetail.DetailDate)
+        if err != nil {
+            return nil, err
+        }
+        paymentDetails = append(paymentDetails, &paymentDetail)
+        payment.PaymentDetail = paymentDetails
+        payment.Order = order
+        res_payments = append(res_payments, payment)
+    }
 
-	return payments, nil
+    return res_payments, nil
 }

@@ -121,9 +121,7 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 		paymentDetail.Status = PaymentStatusPending
 		paymentDetail.ID = payment.ID
 		paymentDetail.CreatedAt = createAt
-		if paymentDetail.DetailDate == (time.Time{}) {
-			paymentDetail.DetailDate = createAt
-		}
+		paymentDetail.DetailDate = createAt
 
 		if paymentDetail.CreditCard == nil {
 			logger.Error(ctx, "payment usecase PaymentAdd: no credit card provided, skipping payment card addition")

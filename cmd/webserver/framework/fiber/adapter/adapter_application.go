@@ -245,8 +245,15 @@ func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber fiber.Ctx) error {
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
+	var message string
+	if res == nil || len(res) == 0 {
+		message = "No payments found for the given order ID"
+	} else {
+		message = "Payments retrieved successfully"
+	}
+
 	resp := external.PaymentResponse{
-		Response: "Payments retrieved successfully",
+		Response: message,
 		Payment: res,
 	}
 	span.SetAttributes(

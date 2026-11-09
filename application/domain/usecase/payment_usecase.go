@@ -14,7 +14,7 @@ import (
 	gocore_kafka "github.com/eliezerraj/go-core/v3/event/kafka"
 	"github.com/eliezerraj/go-core/v3/event/kafka/producer"
 
-	"github.com/go-payment-v2/application/tracing"
+	"github.com/go-payment-v2/application/infrastructure/observability"
 	"github.com/go-payment-v2/application/domain/entity"
 	"github.com/go-payment-v2/application/infrastructure/repository"
 	"github.com/go-payment-v2/application/config"
@@ -70,7 +70,7 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 	logger.Info(ctx, "payment usecase PaymentAdd called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.paymentAdd", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
 	// Start a new transaction
@@ -121,9 +121,7 @@ func (o *PaymentUsecase) PaymentAdd(ctx context.Context, payment entity.Payment)
 		paymentDetail.Status = PaymentStatusPending
 		paymentDetail.ID = payment.ID
 		paymentDetail.CreatedAt = createAt
-		if paymentDetail.DetailDate == (time.Time{}) {
-			paymentDetail.DetailDate = createAt
-		}
+		paymentDetail.DetailDate = createAt
 
 		if paymentDetail.CreditCard == nil {
 			logger.Error(ctx, "payment usecase PaymentAdd: no credit card provided, skipping payment card addition")
@@ -149,7 +147,7 @@ func (o *PaymentUsecase) PaymentGet(ctx context.Context, payment entity.Payment)
 	logger.Info(ctx, "payment usecase PaymentGet called")
 	
 	// Tracing
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.paymentGet", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
 	// Get the payment from the repository
@@ -180,7 +178,7 @@ func (o *PaymentUsecase) PaymentListByOrderID(ctx context.Context, order entity.
 	logger.Info(ctx, "payment usecase PaymentListByOrderID called")
 
 	// Tracing
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.paymentListByOrderID", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.paymentListByOrderID", trace.SpanKindInternal)
 	defer span.End()
 
 	// Get the payment list from the repository
@@ -235,7 +233,7 @@ func NewPaymentUsecaseEventDecorator(next IPaymentUseCase, enabled bool, kafkaPr
 func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment entity.Payment) (*entity.Payment, error) {
 	logger.Info(ctx, "PaymentUsecaseEventDecorator PaymentAdd called")
 
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "usecase.decorator.paymentAdd", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "usecase.decorator.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
 	if d.enabled {

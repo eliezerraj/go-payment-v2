@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/go-payment-v2/application/domain/entity"
-	"github.com/go-payment-v2/application/tracing"
+	"github.com/go-payment-v2/application/infrastructure/observability"
 	"github.com/go-payment-v2/application/domain/apperrors"
 	
 	"github.com/eliezerraj/go-core/v3/logger"
@@ -60,7 +60,7 @@ func (p *PaymentRepository) PaymentGet(ctx context.Context, payment entity.Payme
 	logger.Info(ctx, "payment repository PaymentGet called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentGet", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "repository.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
     meter := otel.Meter("go-payment-v2.repository")
@@ -122,7 +122,7 @@ func (p *PaymentRepository) PaymentAdd(ctx context.Context, tx pgx.Tx, payment e
 	logger.Info(ctx, "payment repository PaymentAdd called" , zap.Any("payment", payment))
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentAdd", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "repository.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 	
 	meter := otel.Meter("go-payment-v2.repository")
@@ -169,7 +169,7 @@ func (p *PaymentRepository) PaymentCardAdd(ctx context.Context, tx pgx.Tx, payme
 	logger.Info(ctx, "payment repository PaymentCardAdd called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentCardAdd", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "repository.paymentCardAdd", trace.SpanKindInternal)
 	defer span.End()
 	
 	meter := otel.Meter("go-payment-v2.repository")
@@ -219,7 +219,7 @@ func (p *PaymentRepository) PaymentCardGet(ctx context.Context, payment entity.P
 	logger.Info(ctx, "payment repository PaymentCardGet called", zap.Any("payment", payment))
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentCardGet", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "repository.paymentCardGet", trace.SpanKindInternal)
 	defer span.End()
 
 	meter := otel.Meter("go-payment-v2.repository")
@@ -287,7 +287,7 @@ func (p *PaymentRepository) PaymentListByOrderID(ctx context.Context, order enti
 	logger.Info(ctx, "payment repository PaymentListByOrderID called", zap.Any("order", order))
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "repository.paymentListByOrderID", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "repository.paymentListByOrderID", trace.SpanKindInternal)
 	defer span.End()
 
 	meter := otel.Meter("go-payment-v2.repository")
@@ -320,7 +320,8 @@ func (p *PaymentRepository) PaymentListByOrderID(ctx context.Context, order enti
 					pd.currency,
 					pd.amount,
 					pd.created_at,
-					c.holder 
+					c.holder,
+					pd.payment_date 
 			from payment p,
 				payment_detail pd,
 				card c
@@ -335,23 +336,22 @@ func (p *PaymentRepository) PaymentListByOrderID(ctx context.Context, order enti
 	}
 	defer rows.Close()
 
-	var payments []*entity.Payment	
-	for rows.Next() {
-		payment := &entity.Payment{}
-		paymentDetails := []*entity.PaymentDetail{}
-		paymentDetail := entity.PaymentDetail{
-			CreditCard: &entity.CreditCard{},
-		}
-		err = rows.Scan(&payment.ID, &payment.TransactionID, &payment.PaymentNumber, &payment.Type, &payment.CreatedAt, &paymentDetail.CreditCard.Pan, &paymentDetail.Currency, &paymentDetail.Amount, &paymentDetail.CreatedAt, &paymentDetail.CreditCard.Holder)
-		if err != nil {
-			return nil, err
-		}
-		paymentDetails = append(paymentDetails, &paymentDetail)
-		payment.PaymentDetail = paymentDetails
-		payment.Order = order
-		res_payments = append(res_payments, payment)
-		payments = append(payments, payment)
-	}
+    res_payments = make([]*entity.Payment, 0)
+    for rows.Next() {
+        payment := &entity.Payment{}
+        paymentDetails := []*entity.PaymentDetail{}
+        paymentDetail := entity.PaymentDetail{
+            CreditCard: &entity.CreditCard{},
+        }
+        err = rows.Scan(&payment.ID, &payment.TransactionID, &payment.PaymentNumber, &payment.Type, &payment.CreatedAt, &paymentDetail.CreditCard.Pan, &paymentDetail.Currency, &paymentDetail.Amount, &paymentDetail.CreatedAt, &paymentDetail.CreditCard.Holder, &paymentDetail.DetailDate)
+        if err != nil {
+            return nil, err
+        }
+        paymentDetails = append(paymentDetails, &paymentDetail)
+        payment.PaymentDetail = paymentDetails
+        payment.Order = order
+        res_payments = append(res_payments, payment)
+    }
 
-	return payments, nil
+    return res_payments, nil
 }

@@ -8,7 +8,7 @@ type OrderRequest struct {
 }
 
 type PaymentDetailRequest struct {
-	DetailDate	time.Time 	`json:"payment_detail_date,omitempty"`
+	DetailDate	time.Time 	`json:"payment_date,omitempty"`
 	Status		string 		`json:"status,omitempty"`
 	Currency	string 		`json:"currency,omitempty"`
 	Amount		float64 	`json:"amount,omitempty"`

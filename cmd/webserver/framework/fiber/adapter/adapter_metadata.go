@@ -7,6 +7,7 @@ import (
 	"github.com/eliezerraj/go-core/v3/logger"
 
 	"github.com/go-payment-v2/application/config"
+	"github.com/go-payment-v2/application/infrastructure/security"
 )
 type MetadataAdapter struct {
 	cfg *config.Config
@@ -53,4 +54,13 @@ func (c *MetadataAdapter) HeadersGet(ctxFiber fiber.Ctx) error {
 
 func (c *MetadataAdapter) InfoGet(ctxFiber fiber.Ctx) error {
 	return ctxFiber.Status(fiber.StatusOK).JSON(fiber.Map{"info": c.cfg})
+}
+
+func (c *MetadataAdapter) ResourceMetadata(ctxFiber fiber.Ctx) error {
+	return ctxFiber.Status(fiber.StatusOK).JSON(
+		security.NewOAuthResource(
+			c.cfg.Authorization.ResourceMetadata,
+			c.cfg.Authorization.AuthorizationServer,
+		),
+	)
 }

@@ -22,9 +22,11 @@ permit(
 )
 when {
     principal.roles.contains(
-        "order-all-role"
+        "payment-all-role"
     )
 };
+
+//----------------------
 
 permit(
     principal,
@@ -44,9 +46,11 @@ permit(
 )
 when {
     principal.roles.contains(
-        "order-all-role"
+        "payment-all-role"
     )
 };
+
+// --------------------------------
 
 permit(
     principal,
@@ -66,6 +70,6 @@ permit(
 )
 when {
     principal.roles.contains(
-        "order-all-role"
+        "payment-all-role"
     )
 };

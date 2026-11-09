@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/go-payment-v2/application/tracing"
+	"github.com/go-payment-v2/application/infrastructure/observability"
 	"github.com/go-payment-v2/application/config"
 	"github.com/go-payment-v2/application/infrastructure/application"
 	"github.com/go-payment-v2/application/domain/external"
@@ -43,7 +43,7 @@ func (a *ApplicationAdapter) PaymentGet(ctxFiber fiber.Ctx) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentGet", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -111,7 +111,7 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber fiber.Ctx) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentAdd", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -185,7 +185,7 @@ func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber fiber.Ctx) error {
 	ctxWithTimeout, cancel := context.WithTimeout(ctxFiber.Context(), a.cfg.HTTP.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentListByOrderID", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxWithTimeout, "adapter.paymentListByOrderID", trace.SpanKindInternal)
 	defer span.End()
 
 	logger.Debug(
@@ -245,8 +245,15 @@ func (a *ApplicationAdapter) PaymentListByOrderID(ctxFiber fiber.Ctx) error {
 		return ctxFiber.Status(errorResponse.StatusCode).JSON(errorResponse)
 	}
 
+	var message string
+	if res == nil || len(res) == 0 {
+		message = "No payments found for the given order ID"
+	} else {
+		message = "Payments retrieved successfully"
+	}
+
 	resp := external.PaymentResponse{
-		Response: "Payments retrieved successfully",
+		Response: message,
 		Payment: res,
 	}
 	span.SetAttributes(

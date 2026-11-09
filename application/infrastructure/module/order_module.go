@@ -12,7 +12,7 @@ import (
 	"github.com/eliezerraj/go-core/v3/httpclient"
 	"github.com/eliezerraj/go-core/v3/logger"
 
-	"github.com/go-payment-v2/application/tracing"
+	"github.com/go-payment-v2/application/infrastructure/observability"
 	"github.com/go-payment-v2/application/config"
 	"github.com/go-payment-v2/application/domain/entity"
 	"github.com/go-payment-v2/application/domain/external"
@@ -46,7 +46,7 @@ func (im *OrderModule) OrderPut(ctx context.Context, order entity.Order) (*entit
 	ctxHttpTimeout, cancel := context.WithTimeout(ctx, im.cfg.Inventory.Timeout)
 	defer cancel()
 
-	ctx, span := tracing.CustomStartSpanCtx(ctxHttpTimeout, "module.order.orderPut", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctxHttpTimeout, "module.order.orderPut", trace.SpanKindInternal)
 	defer span.End()
 
 	var endpoint string

@@ -8,7 +8,7 @@ import (
 
 	"github.com/eliezerraj/go-core/v3/logger"
 	
-	"github.com/go-payment-v2/application/tracing"
+	"github.com/go-payment-v2/application/infrastructure/observability"
 	"github.com/go-payment-v2/application/domain/usecase"
 	"github.com/go-payment-v2/application/domain/external"
 	"github.com/go-payment-v2/application/domain/entity"
@@ -40,7 +40,7 @@ func (p *PaymentController) PaymentAdd(ctx context.Context, req external.Payment
 	logger.Info(ctx, "payment controller PaymentAdd called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.paymentAdd", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.paymentAdd", trace.SpanKindInternal)
 	defer span.End()
 
 	// Schema validation
@@ -97,7 +97,7 @@ func (p *PaymentController) PaymentGet(ctx context.Context, req external.Payment
 	logger.Info(ctx, "payment controller PaymentGet called", zap.String("payment_number", req.PaymentNumber))
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.paymentGet", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.paymentGet", trace.SpanKindInternal)
 	defer span.End()
 
 	payment := entity.Payment{
@@ -118,7 +118,7 @@ func (p *PaymentController) PaymentListByOrderID(ctx context.Context, req extern
 	logger.Info(ctx, "payment controller PaymentListByOrderID called")
 
 	// Tracing and metrics
-	ctx, span := tracing.CustomStartSpanCtx(ctx, "controller.paymentListByOrderID", trace.SpanKindInternal)
+	ctx, span := observability.CustomStartSpanCtx(ctx, "controller.paymentListByOrderID", trace.SpanKindInternal)
 	defer span.End()
 
 	order := entity.Order{

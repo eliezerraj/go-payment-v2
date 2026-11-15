@@ -15,10 +15,10 @@ import (
 	"github.com/eliezerraj/go-core/v3/event/kafka/producer"
 
 	"github.com/go-payment-v2/application/infrastructure/observability"
+	"github.com/go-payment-v2/application/infrastructure/observability/otelkafka"
 	"github.com/go-payment-v2/application/domain/entity"
 	"github.com/go-payment-v2/application/infrastructure/repository"
 	"github.com/go-payment-v2/application/config"
-	"github.com/go-payment-v2/application/shared/otelkafka"
 	
 	"github.com/jackc/pgx/v5"
 

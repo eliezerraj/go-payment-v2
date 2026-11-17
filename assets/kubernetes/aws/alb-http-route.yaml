@@ -1,13 +1,13 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: go-inventory-v2-route
+  name: go-payment-v2-route
   namespace: test-a
   labels:
-    app: go-inventory-v2-route
+    app: go-payment-v2-route
 spec:
   hostnames:
-    - "go-inventory-v2.architecturedev.xpto.io"
+    - "go-payment-v2.architecturedev.xpto.io"
   parentRefs:
     - name: alb-arch-eks-002-gateway
       namespace: test-a
@@ -21,6 +21,6 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: svc-go-inventory-v2
+        - name: svc-go-payment-v2
           port: 7000
           namespace: test-a

@@ -150,6 +150,10 @@ func (a *ApplicationAdapter) PaymentAdd(ctxFiber fiber.Ctx) error {
 			logger.Warn(ctx, "payment not found", zap.Error(err))
 			statusCode = fiber.StatusNotFound
 			statusCodeMessage = fiber.ErrNotFound.Message
+		} else if errors.Is(err, apperrors.ErrProducerKafka) {
+			logger.Warn(ctx, "error producing Kafka message:", zap.Error(err))
+			statusCode = fiber.StatusRequestTimeout
+			statusCodeMessage = fiber.ErrRequestTimeout.Message
 		} else {
 			logger.Error(ctx, "failed to get payment ", zap.Error(err))
 			statusCode = fiber.StatusInternalServerError

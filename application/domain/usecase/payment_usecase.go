@@ -24,11 +24,10 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel"
-
 )
 
 const (
-	PaymentStatusPending = "payment:pending"
+	PaymentStatusPending = "payment:pending(via_kafka)"
 	PaymentStatusCompleted = "payment:completed"
 	RequestIDHeaderName = "x-request-id"
 )

@@ -1,0 +1,75 @@
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: tg-go-payment-v2
+  namespace: test-a
+  labels:
+    app: tg-go-payment-v2
+spec:
+  targetReference:
+    name: svc-go-payment-v2
+  defaultConfiguration:
+    targetType: ip
+    healthCheckConfig:
+      healthCheckProtocol: HTTP
+      healthCheckPath: /health
+      healthCheckPort: "traffic-port"
+      healthCheckInterval: 15
+      healthyThresholdCount: 2
+      unhealthyThresholdCount: 2
+      matcher:
+        httpCode: "200-399"
+  routeConfigurations:
+    - routeIdentifier:
+        kind: HTTPRoute
+        name: go-payment-v2-route
+        namespace: test-a
+      targetGroupProps:
+        healthCheckConfig:
+          healthCheckProtocol: HTTP
+          healthCheckPath: /health
+          healthCheckPort: "traffic-port"
+          healthCheckInterval: 15
+          healthyThresholdCount: 2
+          unhealthyThresholdCount: 2
+          matcher:
+            httpCode: "200-399"
+
+---
+
+apiVersion: gateway.k8s.aws/v1
+kind: TargetGroupConfiguration
+metadata:
+  name: tg-go-payment-v2-metrics
+  namespace: test-a
+  labels:
+    app: tg-go-payment-v2-metrics
+spec:
+  targetReference:
+    name: svc-go-payment-v2-metrics
+  defaultConfiguration:
+    targetType: ip
+    healthCheckConfig:
+      healthCheckProtocol: HTTP
+      healthCheckPath: /metrics
+      healthCheckPort: "traffic-port"
+      healthCheckInterval: 15
+      healthyThresholdCount: 2
+      unhealthyThresholdCount: 2
+      matcher:
+        httpCode: "200-399"
+  routeConfigurations:
+    - routeIdentifier:
+        kind: HTTPRoute
+        name: go-payment-v2-route-metrics
+        namespace: test-a
+      targetGroupProps:
+        healthCheckConfig:
+          healthCheckProtocol: HTTP
+          healthCheckPath: /metrics
+          healthCheckPort: "traffic-port"
+          healthCheckInterval: 15
+          healthyThresholdCount: 2
+          unhealthyThresholdCount: 2
+          matcher:
+            httpCode: "200-399"

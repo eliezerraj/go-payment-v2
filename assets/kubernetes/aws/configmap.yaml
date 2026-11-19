@@ -43,9 +43,12 @@ data:
   AUTHORIZATION_DRY_RUN: "false"
   AUTHORIZATION_POLICY_PATH: "/app/application/infrastructure/security/policy/policy.cedar"
   AUTHORIZATION_TIMEOUT: "15s"
-  AUTHORIZATION_JWKS_URL: "https://go-authorizer-v2.architecture.xpto.io/v1/.well-known/jwks.json"
+  AUTHORIZATION_JWKS_URL: "https://go-authorizer-v2.architecture.x.io/v1/.well-known/jwks.json"
   AUTHORIZATION_HEADER_KEY: "Authorization"
   AUTHORIZATION_REQUIRED_HEADER: "false"
+  AUTHORIZATION_AUDIENCE: "go-payment-v2"
+  AUTHORIZATION_OAUTH_PROTECTED_RESOURCE_URL: "https://go-payment-v2.architecturedev.x.io/.well-known/oauth-protected-resource"
+  AUTHORIZATION_SERVER: "https://go-authorizer-v2.architecture.x.io"
 
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-002-otel-collector.default.svc.cluster.local:4317"
   OTEL_METRICS_PORT: "8003"

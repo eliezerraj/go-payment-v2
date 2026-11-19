@@ -83,9 +83,9 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 
 	// Create the forwards modules.
 	httpConfig := &httpclient.HttpConfig{
-		Timeout:             cfg.HTTP.Timeout * time.Second,
-		KeepAlive:           cfg.HTTP.KeepAlive * time.Second,
-		IdleConnTimeout:     cfg.HTTP.IdleConnTimeout * time.Second,
+		Timeout:             cfg.HTTP.Timeout,
+		KeepAlive:           cfg.HTTP.KeepAlive,
+		IdleConnTimeout:     cfg.HTTP.IdleConnTimeout,
 		MaxIdleConns:        cfg.HTTP.MaxIdleConns,
 		MaxIdleConnsPerHost: cfg.HTTP.MaxIdleConnsPerHost,
 		MaxConnsPerHost:     cfg.HTTP.MaxConnsPerHost,

@@ -19,6 +19,7 @@ import (
 	"github.com/go-payment-v2/application/domain/entity"
 	"github.com/go-payment-v2/application/infrastructure/repository"
 	"github.com/go-payment-v2/application/config"
+	"github.com/go-payment-v2/application/domain/apperrors"
 	
 	"github.com/jackc/pgx/v5"
 
@@ -286,10 +287,19 @@ func (d *PaymentUsecaseEventDecorator) PaymentAdd(ctx context.Context, payment e
 	otel.GetTextMapPropagator().Inject(ctx, &kafkaHeaders)
 	// Inject tracing context into Kafka headers
 	kafkaHeaders.Set("x-request-id", xrequestid)
-	err = d.producerWorker.ProduceMessage(ctx, topic, key, kafkaHeaders, payload_bytes)
+
+	ctxEvent, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	err = d.produceMessageWithContext(ctxEvent, topic, key, kafkaHeaders, payload_bytes)
 	if err != nil {
-		logger.Debug(ctx, "PaymentUsecaseEventDecorator: failed to produce message", zap.Error(err))
-		return nil, err
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			logger.Error(ctx, "PaymentUsecaseEventDecorator: context expired before kafka delivery", zap.Error(err))
+			return nil, apperrors.ErrProducerKafka
+		}
+
+		logger.Error(ctx, "PaymentUsecaseEventDecorator: failed to produce message", zap.Error(err))
+		return nil, apperrors.ErrProducerKafka
 	}
 
 	logger.Info(ctx, "PaymentUsecaseEventDecorator: payment added and event published successfully")
@@ -314,4 +324,19 @@ func (d *PaymentUsecaseEventDecorator) PaymentListByOrderID(ctx context.Context,
 	logger.Info(ctx, "PaymentUsecaseEventDecorator PaymentListByOrderID called")
 
 	return d.next.PaymentListByOrderID(ctx, order)
+}
+
+func (d *PaymentUsecaseEventDecorator) produceMessageWithContext(ctx context.Context, topic string, key string, kafkaHeaders otelkafka.KafkaHeaderCarrier,	payload []byte,) error {
+	resultCh := make(chan error, 1)
+
+	go func() {
+		resultCh <- d.producerWorker.ProduceMessage(ctx, topic, key, kafkaHeaders, payload)
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-resultCh:
+		return err
+	}
 }
